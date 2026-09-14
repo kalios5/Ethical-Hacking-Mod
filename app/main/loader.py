@@ -1,7 +1,7 @@
 import importlib
 import pkgutil
 
-import plugins  # the top-level plugins package
+from app import plugins  # the top-level plugins package
 
 
 def discover_plugins():

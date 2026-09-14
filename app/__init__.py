@@ -1,15 +1,11 @@
 from flask import Flask
-from config import *
+from app.config import *
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from flask_login import LoginManager
-from elasticsearch import Elasticsearch
-from sqlalchemy import create_engine
-from flask_restx import Api
+#from flask_login import LoginManager
 db = SQLAlchemy()
 migrate = Migrate()
-login = LoginManager()
-api = Api()
+#login = LoginManager()
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -17,13 +13,13 @@ def create_app(config_class=Config):
 
     db.init_app(app)
     migrate.init_app(app,db)
-    login.init_app(app)
-    api.init_app(app)
+    #login.init_app(app)
 
-    login.login_view = 'main.login'
+    #login.login_view = 'main.login'
 
     from app.main import bp as main_bp
     app.register_blueprint(main_bp,url_prefix='/main')
-
+    from app import models
+    
     return app
 
