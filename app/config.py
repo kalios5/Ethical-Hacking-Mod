@@ -13,6 +13,6 @@ class Config:
 class ProductionConfig:
     DEBUG = False
     TESTING = False
-    SQLALCHEMY_DATABASE_URI = f"postgresql://{os.environ.get("DB_USERNAME")}:{os.environ.get("DB_PASSWORD")}@{os.environ.get("DB_IP")}:{os.environ.get("DB_PORT")}/{os.environ.get("DB_NAME")}"
+    SQLALCHEMY_DATABASE_URI = f"postgresql://{os.environ.get("DB_USERNAME")}:{os.environ.get("DB_PASSWORD")}@db:5432/{os.environ.get("DB_NAME")}"
     UPLOAD_EXTENSIONS = ['jpg', 'png', 'gif','txt']
     POSTS_PER_PAGE = 12
