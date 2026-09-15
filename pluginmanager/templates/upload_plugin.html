@@ -1,0 +1,28 @@
+<h1>Upload a Plugin</h1>
+
+{% if error %}
+    <p style="color: red;"><strong>Error:</strong> {{ error }}</p>
+{% endif %}
+
+<form method="post" enctype="multipart/form-data">
+    <label>
+        Plugin folder name (letters, numbers, underscores only):<br>
+        <input type="text" name="plugin_name" required>
+    </label><br><br>
+
+    <label>
+        Plugin file (.py):<br>
+        <input type="file" name="plugin_file" accept=".py" required>
+    </label><br><br>
+
+    <button type="submit">Upload</button>
+</form>
+
+<p><a href="{{ url_for('pluginmanager.plugin_list') }}">← Back to plugin list</a></p>
+
+<hr>
+<p><small>
+    Required format: your file must define <code>PLUGIN_NAME</code>,
+    <code>PLUGIN_DESCRIPTION</code>, and the functions
+    <code>register(shop=None)</code> and <code>render_widget(context=None)</code>.
+</small></p>
