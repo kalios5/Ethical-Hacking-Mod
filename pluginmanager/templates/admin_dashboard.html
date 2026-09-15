@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+</head>
+<body>
+    <h1>Admin Dashboard</h1>
+
+    <p>Logged in as: {{ session.get('username', 'admin') }}</p>
+    <ul>
+        <li>Total plugins: {{ total_plugins }}</li>
+        <li>Active plugins: {{ active_plugins }}</li>
+    </ul>
+
+    <nav>
+        <a href="{{ url_for('pluginmanager.plugin_list') }}">Manage plugins</a> |
+        <a href="{{ url_for('pluginmanager.storefront_preview') }}">Preview storefront</a> |
+        <a href="{{ url_for('pluginmanager.logout') }}">Logout</a>
+    </nav>
+</body>
+</html>
