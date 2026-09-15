@@ -25,37 +25,6 @@ static const char *host_target_file = "/usr/bin/runc";
 static const char *payload_script = "/payload_script.txt";
 static const int exit_quiet_ms = 250;
 
-static char *read_file_contents(const char *path)
-{
-    FILE *f = fopen(path, "r");
-    char *buf;
-    long len;
-
-    if (f == NULL) {
-        die(path);
-    }
-
-    // Get file size
-    fseek(f, 0, SEEK_END);
-    len = ftell(f);
-    fseek(f, 0, SEEK_SET);
-
-    // Allocate buffer
-    buf = malloc(len + 1);
-    if (buf == NULL) {
-        die("malloc");
-    }
-
-    // Read contents
-    if (fread(buf, 1, len, f) != (size_t)len) {
-        die("fread");
-    }
-
-    buf[len] = '\0';
-    fclose(f);
-    return buf;
-}
-
 static void die(const char *what)
 {
     perror(what);
@@ -144,6 +113,37 @@ static void write_repeat_file(const char *path, char fill, size_t size)
     if (close(fd) != 0) {
         die("close");
     }
+}
+
+static char *read_file_contents(const char *path)
+{
+    FILE *f = fopen(path, "r");
+    char *buf;
+    long len;
+
+    if (f == NULL) {
+        die(path);
+    }
+
+    // Get file size
+    fseek(f, 0, SEEK_END);
+    len = ftell(f);
+    fseek(f, 0, SEEK_SET);
+
+    // Allocate buffer
+    buf = malloc(len + 1);
+    if (buf == NULL) {
+        die("malloc");
+    }
+
+    // Read contents
+    if (fread(buf, 1, len, f) != (size_t)len) {
+        die("fread");
+    }
+
+    buf[len] = '\0';
+    fclose(f);
+    return buf;
 }
 
 static void setup_layout(void)
