@@ -1,12 +1,17 @@
 from flask import Blueprint
 
 # A blueprint lets this plugin add its own routes under /plugin1
-bp = Blueprint("plugin1", __name__, url_prefix="/plugin1")
+bp = Blueprint("website", __name__)
 
 
 @bp.route("/")
 def index():
-    return "Hello from plugin 1!"
+    return "<h1>Main Website</h1><p>The site is running! Go to <a href='/auth/login'>Login</a></p>"
+
+
+@bp.route("/auth/login")
+def login():
+    return "<h1>Login Page</h1><p>Your user management will go here.</p>"
 
 
 def register(app):

@@ -15,7 +15,10 @@ class Config:
 class ProductionConfig:
     DEBUG = False
     TESTING = False
-    SQLALCHEMY_DATABASE_URI = f"postgresql://{os.environ.get("DB_USERNAME")}:{os.environ.get("DB_PASSWORD")}@{os.environ.get("DB_IP")}:{os.environ.get("DB_PORT")}/{os.environ.get("DB_NAME")}"
+    SQLALCHEMY_DATABASE_URI = (
+        f"postgresql://{os.environ.get('DB_USERNAME')}:{os.environ.get('DB_PASSWORD')}"
+        f"@{os.environ.get('DB_IP')}:{os.environ.get('DB_PORT')}/{os.environ.get('DB_NAME')}"
+    )
     UPLOAD_EXTENSIONS = ['jpg', 'png', 'gif','txt']
     ELASTICSEARCH_URL = f"http://{os.environ.get('ES_HOST')}:{os.environ.get('ES_PORT')}"
     POSTS_PER_PAGE = 12
