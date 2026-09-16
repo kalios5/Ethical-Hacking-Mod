@@ -7,7 +7,7 @@ db = SQLAlchemy()
 migrate = Migrate()
 #login = LoginManager()
 
-def create_app(config_class=ProductionConfig):
+def create_app(config_class=TestPostgresConfig):
     app = Flask(__name__)
     app.config.from_object(config_class)
 
@@ -19,7 +19,7 @@ def create_app(config_class=ProductionConfig):
 
     from app.main import bp as main_bp
     app.register_blueprint(main_bp,url_prefix='/')
-    from app import models
+    from app.db import models
     
     return app
 

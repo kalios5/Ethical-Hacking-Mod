@@ -37,12 +37,9 @@ Seeded logins (see deployment/db/init/02_seed.sql):
 """
 from datetime import datetime
 
-from . import db
-from .models import User
-from .security import verify_password
-
-# Imported lazily inside functions so this module still works if the logging
-# package isn't wired up yet.
+from app import db
+from app.db.models import User
+from app.db.security import verify_password
 
 
 def _audit(*args, **kwargs):
@@ -92,7 +89,7 @@ def authenticate(username, password, shop_id=None, ip=None):
 
     # Success.
     user.failed_logins = 0
-    user.last_login = datetime.utcnow()
+    user.last_login = datetime.now()
     try:
         db.session.commit()
     except Exception:
@@ -102,12 +99,10 @@ def authenticate(username, password, shop_id=None, ip=None):
     return user
 
 
-def create_user(shop_id, username, email, password, role="customer", mode=None):
+def create_user(shop_id, username, email, password, role="customer", mode='weak'):
     """Helper for the admin console / user-management member."""
     from logging_setup.db_audit import actions
-    from .config import DBConfig
 
-    mode = mode or DBConfig.PASSWORD_HASH_MODE
     user = User(shop_id=shop_id, username=username, email=email,
                 role=role, hash_mode=mode)
     user.set_password(password, mode)

@@ -1,7 +1,7 @@
 from flask import render_template, request, redirect, url_for
 from app.main import bp
 from app.main.loader import discover_plugins, get_plugin
-from app.models import db, PluginToggle
+from app.db.models import db, PluginToggle
 
 @bp.route('/')
 def home():

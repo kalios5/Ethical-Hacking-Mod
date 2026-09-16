@@ -1,18 +1,20 @@
-"""
-db/models.py  -  SQLAlchemy models mirroring deployment/db/init/01_schema.sql.
-
-Keep this file and the SQL schema in sync. The SQL scripts are the source of
-truth in Docker (they create the tables + triggers); these models are how the
-Flask app reads/writes them.
-"""
+from flask_sqlalchemy import SQLAlchemy
+from app import db
 from datetime import datetime
 
-from . import db
 
 # BIGINT that still auto-increments on sqlite (local dev). On MySQL it stays a
 # real BIGINT AUTO_INCREMENT; sqlite needs plain INTEGER for rowid autoincrement.
 BigIntPK = db.BigInteger().with_variant(db.Integer, "sqlite")
 
+
+class PluginToggle(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+    enabled = db.Column(db.Boolean, default=False)
+
+    def __repr__(self):
+        return f"<PluginToggle {self.name} enabled={self.enabled}>"
 
 class Shop(db.Model):
     __tablename__ = "shops"
