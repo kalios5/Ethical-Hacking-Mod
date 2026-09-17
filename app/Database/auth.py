@@ -38,8 +38,8 @@ Seeded logins (see deployment/db/init/02_seed.sql):
 from datetime import datetime
 
 from app import db
-from app.db.models import User
-from app.db.security import verify_password
+from app.Database.models import User
+from app.Database.security import verify_password
 
 
 def _audit(*args, **kwargs):

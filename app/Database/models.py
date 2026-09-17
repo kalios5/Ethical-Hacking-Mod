@@ -2,12 +2,6 @@ from flask_sqlalchemy import SQLAlchemy
 from app import db
 from datetime import datetime
 
-
-# BIGINT that still auto-increments on sqlite (local dev). On MySQL it stays a
-# real BIGINT AUTO_INCREMENT; sqlite needs plain INTEGER for rowid autoincrement.
-BigIntPK = db.BigInteger().with_variant(db.Integer, "sqlite")
-
-
 class PluginToggle(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True, nullable=False)
@@ -142,7 +136,7 @@ class Plugin(db.Model):
 class AuditLog(db.Model):
     """Application-written security events. Also written by logging_setup."""
     __tablename__ = "audit_log"
-    id = db.Column(BigIntPK, primary_key=True)
+    id = db.Column(db.BigInteger(), primary_key=True)
     ts = db.Column(db.DateTime, default=datetime.utcnow, index=True)
     actor_user_id = db.Column(db.Integer, index=True)
     actor_ip = db.Column(db.String(45))
@@ -157,7 +151,7 @@ class AuditLog(db.Model):
 class DbChangeLog(db.Model):
     """Read-only view of the trigger-written DB change log."""
     __tablename__ = "db_change_log"
-    id = db.Column(BigIntPK, primary_key=True)
+    id = db.Column(db.BigInteger(), primary_key=True)
     ts = db.Column(db.DateTime, default=datetime.utcnow, index=True)
     db_user = db.Column(db.String(128), nullable=False)
     table_name = db.Column(db.String(64), nullable=False)

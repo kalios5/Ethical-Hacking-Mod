@@ -9,7 +9,7 @@ def discover_plugins():
     found = []
     for _finder, name, ispkg in pkgutil.iter_modules(plugins.__path__):
         if ispkg:
-            module = importlib.import_module(f"plugins.{name}")
+            module = importlib.import_module(f"app.plugins.{name}")
             found.append((name, module))
     return found
 
