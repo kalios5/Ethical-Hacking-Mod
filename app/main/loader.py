@@ -15,4 +15,4 @@ def discover_plugins():
 
 
 def get_plugin(name):
-    return importlib.import_module(f"plugins.{name}")
+    return importlib.import_module(f"app.plugins.{name}")

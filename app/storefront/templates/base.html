@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Petal & Stem{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='site.css') }}">
+</head>
+<body>
+<header class="topbar">
+    <a class="brand" href="{{ url_for('storefront.index') }}">Petal & Stem</a>
+    <nav>
+        <a href="{{ url_for('storefront.index') }}">Shop</a>
+        {% if current_user %}<a href="{{ url_for('storefront.cart') }}">Cart</a><a href="{{ url_for('auth.account') }}">{{ current_user.username }}</a>{% if current_user.role in ['admin', 'superadmin'] %}<a href="{{ url_for('admin.dashboard') }}">Admin</a>{% endif %}<a href="{{ url_for('auth.logout') }}">Log out</a>{% else %}<a href="{{ url_for('auth.login') }}">Log in</a><a class="button small" href="{{ url_for('auth.register') }}">Create account</a>{% endif %}
+    </nav>
+</header>
+<main class="page">
+    {% with messages = get_flashed_messages(with_categories=true) %}{% if messages %}<div class="notices">{% for category, message in messages %}<div class="notice {{ category }}">{{ message }}</div>{% endfor %}</div>{% endif %}{% endwith %}
+    {% block content %}{% endblock %}
+</main>
+<footer><span>Petal & Stem</span><span>Thoughtful things, beautifully sent.</span></footer>
+</body>
+</html>
