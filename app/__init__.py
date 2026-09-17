@@ -19,6 +19,10 @@ def create_app(config_class=TestPostgresConfig):
 
     from app.main import bp as main_bp
     app.register_blueprint(main_bp,url_prefix='/')
+
+    from app.logging import bp as logs_bp
+    app.register_blueprint(logs_bp)
+
     from app.Database import models
     
     return app
