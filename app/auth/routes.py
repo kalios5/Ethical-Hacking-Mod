@@ -4,7 +4,9 @@ from flask import flash, redirect, render_template, request, session, url_for
 
 from app import db
 from app.auth import bp
-from app.Database.models import User
+from app.Database.models import User, Plugin
+from app.Database.auth import authenticate
+from security_plugins.temp_lockout import is_locked_out, record_failed_attempt, seconds_remaining
 
 
 def current_user():
@@ -28,13 +30,38 @@ def login():
     if request.method == "POST":
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "")
-        user = User.query.filter_by(username=username).first()
-        if user and user.is_active and user.check_password(password):
+
+        existing_user = User.query.filter_by(username=username).first()
+
+        # Prototype security plugin, statically imported (see
+        # security_plugins/temp_lockout/__init__.py). Only enforced when
+        # this shop has it enabled via /admin/security-settings.
+        if existing_user:
+            lockout_toggle = Plugin.query.filter_by(
+                shop_id=existing_user.shop_id, name="temp_lockout"
+            ).first()
+            lockout_enabled = lockout_toggle.enabled if lockout_toggle else True
+
+            if lockout_enabled and is_locked_out(existing_user):
+                remaining = seconds_remaining(existing_user)
+                flash(f"Too many failed attempts. Try again in {remaining} seconds.", "error")
+                return render_template("auth/login.html")
+        else:
+            lockout_enabled = True
+
+        # Real DB-backed auth (app/Database/auth.py) — logs LOGIN_SUCCESS /
+        # LOGIN_FAILED to the audit log and keeps failed_logins current.
+        user = authenticate(username, password, ip=request.remote_addr)
+        if user:
             session.clear()
             session["user_id"] = user.id
             flash(f"Welcome back, {user.username}.", "success")
             target = request.args.get("next") or url_for("storefront.index")
             return redirect(target if target.startswith("/") else url_for("storefront.index"))
+
+        if lockout_enabled and existing_user:
+            db.session.refresh(existing_user)
+            record_failed_attempt(existing_user)
         flash("Invalid username or password.", "error")
     return render_template("auth/login.html")
 
