@@ -61,8 +61,8 @@ def audit(action, actor=None, ip=None, shop_id=None,
 
     # 2) best-effort write to the audit_log table.
     try:
-        from db import db
-        from db.models import AuditLog
+        from app import db
+        from app.Database.models import AuditLog
         row = AuditLog(
             actor_user_id=actor_id, actor_ip=ip, shop_id=shop,
             action=action, target_type=target_type,
@@ -74,7 +74,7 @@ def audit(action, actor=None, ip=None, shop_id=None,
     except Exception:
         _log.exception("failed to persist audit row (file log still recorded)")
         try:
-            from db import db
+            from app import db
             db.session.rollback()
         except Exception:
             pass
