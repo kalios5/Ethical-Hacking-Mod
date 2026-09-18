@@ -1,0 +1,14 @@
+{% extends "base.html" %}{% block title %}Security Settings | Admin{% endblock %}{% block content %}
+<div class="section-heading">
+    <div><p class="eyebrow">Admin / Storefront</p><h1>Security Features</h1></div>
+    <a class="back" href="{{ url_for('admin.dashboard') }}">← Dashboard</a>
+</div>
+<form method="post">
+    <label class="plugin-row">
+        <input type="checkbox" name="enabled" {% if toggle.enabled %}checked{% endif %}>
+        <span><strong>Temporary Account Lockout</strong>
+        <small>Locks an account for a cooldown period after 5 failed logins.</small></span>
+    </label><br>
+    <button class="button" type="submit">Save</button>
+</form>
+{% endblock %}

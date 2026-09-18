@@ -1,0 +1,16 @@
+{% extends "base.html" %}{% block title %}Upload Plugin | Admin{% endblock %}{% block content %}
+<div class="section-heading">
+    <div><p class="eyebrow">Admin / Storefront</p><h1>Upload a Plugin</h1></div>
+    <a class="back" href="{{ url_for('admin.plugins') }}">← Plugins</a>
+</div>
+{% if error %}<div class="notice error">{{ error }}</div>{% endif %}
+<form method="post" enctype="multipart/form-data">
+    <label>Plugin folder name (letters, numbers, underscores only)<br>
+        <input type="text" name="plugin_name" required>
+    </label><br><br>
+    <label>Plugin file (.py)<br>
+        <input type="file" name="plugin_file" accept=".py" required>
+    </label><br><br>
+    <button class="button" type="submit">Upload</button>
+</form>
+{% endblock %}
