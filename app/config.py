@@ -12,5 +12,5 @@ class TestPostgresConfig:
 class ProductionConfig:
     DEBUG = False
     TESTING = False
-    SQLALCHEMY_DATABASE_URI = f"postgresql://{os.environ.get("DB_USERNAME")}:{os.environ.get("DB_PASSWORD")}@db:5432/{os.environ.get("DB_NAME")}"
+    SQLALCHEMY_DATABASE_URI = f"postgresql://{os.environ.get('DB_USERNAME')}:{os.environ.get('DB_PASSWORD')}@db:5432/{os.environ.get('DB_NAME')}"
     POSTS_PER_PAGE = 12

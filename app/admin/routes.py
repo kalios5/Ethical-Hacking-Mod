@@ -1,12 +1,24 @@
+import os
+import re
 from functools import wraps
 
 from flask import abort, flash, redirect, render_template, request, url_for
+from werkzeug.utils import secure_filename
 
 from app import db
 from app.admin import bp
+from app.admin.validators import validate_plugin_format
 from app.auth.routes import current_user, login_required
 from app.Database.models import Order, Plugin, Product, Shop, User
 from app.main.loader import discover_plugins
+
+PLUGIN_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "plugins")
+ALLOWED_EXTENSIONS = {".py"}
+MAX_UPLOAD_SIZE = 100 * 1024
+
+
+def is_safe_plugin_name(name):
+    return bool(re.fullmatch(r"[a-zA-Z0-9_]+", name))
 
 
 def admin_required(view):
@@ -103,3 +115,73 @@ def plugins():
     enabled = {plugin.name for plugin in Plugin.query.filter_by(shop_id=shop.id, enabled=True).all()}
     plugin_data = [{"name": name, "display_name": getattr(module, "PLUGIN_NAME", name), "description": getattr(module, "PLUGIN_DESCRIPTION", ""), "enabled": name in enabled} for name, module in discover_plugins()]
     return render_template("admin/plugins.html", plugins=plugin_data)
+
+
+@bp.route("/plugins/upload", methods=["GET", "POST"])
+@admin_required
+def upload_plugin():
+    error = None
+    shop = current_shop()
+
+    if request.method == "POST":
+        plugin_name = request.form.get("plugin_name", "").strip()
+        file = request.files.get("plugin_file")
+
+        if not plugin_name or not is_safe_plugin_name(plugin_name):
+            error = "Plugin name must contain only letters, numbers, or underscores."
+        elif not file or file.filename == "":
+            error = "No file selected."
+        else:
+            filename = secure_filename(file.filename)
+            ext = os.path.splitext(filename)[1].lower()
+
+            if ext not in ALLOWED_EXTENSIONS:
+                error = "Only .py files are accepted."
+            else:
+                source_bytes = file.read()
+                if len(source_bytes) > MAX_UPLOAD_SIZE:
+                    error = "Plugin file is too large."
+                else:
+                    source_text = source_bytes.decode("utf-8", errors="replace")
+                    is_valid, format_error = validate_plugin_format(source_text)
+                    if not is_valid:
+                        error = format_error
+                    else:
+                        plugin_folder = os.path.join(PLUGIN_DIR, plugin_name)
+                        os.makedirs(plugin_folder, exist_ok=True)
+                        with open(os.path.join(plugin_folder, "__init__.py"), "wb") as f:
+                            f.write(source_bytes)
+
+                        # Mark it as third-party in the model
+                        plugin_row = Plugin.query.filter_by(shop_id=shop.id, name=plugin_name).first()
+                        if not plugin_row:
+                            plugin_row = Plugin(shop_id=shop.id, name=plugin_name)
+                            db.session.add(plugin_row)
+                        plugin_row.is_third_party = True
+                        db.session.commit()
+
+                        flash("Plugin uploaded.", "success")
+                        return redirect(url_for("admin.plugins"))
+
+    return render_template("admin/upload_plugin.html", error=error)
+
+
+@bp.route("/security-settings", methods=["GET", "POST"])
+@admin_required
+def security_settings():
+    # separate from /admin/plugins. That route toggles uploadable plugins
+    # This toggles a TRUSTED security feature.
+    shop = current_shop()
+    toggle = Plugin.query.filter_by(shop_id=shop.id, name="temp_lockout").first()
+    if not toggle:
+        toggle = Plugin(shop_id=shop.id, name="temp_lockout", enabled=True, is_third_party=False)
+        db.session.add(toggle)
+        db.session.commit()
+
+    if request.method == "POST":
+        toggle.enabled = "enabled" in request.form
+        db.session.commit()
+        flash("Security settings updated.", "success")
+        return redirect(url_for("admin.security_settings"))
+
+    return render_template("admin/security_settings.html", toggle=toggle)

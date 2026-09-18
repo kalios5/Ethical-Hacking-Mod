@@ -136,7 +136,7 @@ class Plugin(db.Model):
 class AuditLog(db.Model):
     """Application-written security events. Also written by logging_setup."""
     __tablename__ = "audit_log"
-    id = db.Column(db.BigInteger(), primary_key=True)
+    id = db.Column(db.Integer(), primary_key=True)
     ts = db.Column(db.DateTime, default=datetime.utcnow, index=True)
     actor_user_id = db.Column(db.Integer, index=True)
     actor_ip = db.Column(db.String(45))
@@ -151,7 +151,7 @@ class AuditLog(db.Model):
 class DbChangeLog(db.Model):
     """Read-only view of the trigger-written DB change log."""
     __tablename__ = "db_change_log"
-    id = db.Column(db.BigInteger(), primary_key=True)
+    id = db.Column(db.Integer(), primary_key=True)
     ts = db.Column(db.DateTime, default=datetime.utcnow, index=True)
     db_user = db.Column(db.String(128), nullable=False)
     table_name = db.Column(db.String(64), nullable=False)
