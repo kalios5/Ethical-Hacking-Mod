@@ -1,1 +1,38 @@
-{% extends "base.html" %}{% block title %}Admin | Petal & Stem{% endblock %}{% block content %}<div class="section-heading"><div><p class="eyebrow">{{ shop.name }} / Control room</p><h1>Good work, {{ current_user.username }}.</h1></div></div><div class="stats"><div><span>Products</span><strong>{{ product_count }}</strong></div><div><span>Orders</span><strong>{{ order_count }}</strong></div><div><span>Customers</span><strong>{{ customer_count }}</strong></div></div><div class="admin-links"><a href="{{ url_for('admin.products') }}"><strong>Manage products</strong><span>Create, edit, and remove catalogue items →</span></a><a href="{{ url_for('admin.plugins') }}"><strong>Manage plugins</strong><span>Choose what appears in your storefront →</span></a></div>{% endblock %}
+{% extends "base.html" %}
+{% block title %}Admin | Petal & Stem{% endblock %}
+{% block content %}
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">{{ shop.name }} / Control room</p>
+            <h1>Good work, {{ current_user.username }}.</h1>
+        </div>
+    </div>
+    <div class="stats">
+        <div>
+            <span>Products</span>
+            <strong>{{ product_count }}</strong>
+        </div>
+        <div>
+            <span>Orders</span>
+            <strong>{{ order_count }}</strong>
+        </div>
+        <div>
+            <span>Customers</span>
+            <strong>{{ customer_count }}</strong>
+        </div>
+    </div>
+    <div class="admin-links">
+        <a href="{{ url_for('admin.products') }}">
+            <strong>Manage products</strong>
+            <span>Create, edit, and remove catalogue items →</span>
+        </a>
+        <a href="{{ url_for('admin.plugins') }}">
+            <strong>Manage plugins</strong>
+            <span>Choose what appears in your storefront →</span>
+        </a>
+        <a href="{{ url_for('pluginmanager.plugin_list') }}">
+            <strong>Plugin manager (legacy)</strong>
+            <span>Toggle installed plugin modules →</span>
+        </a>
+    </div>
+{% endblock %}

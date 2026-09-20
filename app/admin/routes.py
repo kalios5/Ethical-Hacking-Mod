@@ -6,7 +6,12 @@ from app import db
 from app.admin import bp
 from app.auth.routes import current_user, login_required
 from app.Database.models import Order, Plugin, Product, Shop, User
-from app.main.loader import discover_plugins
+from app.logging.db_audit import actions, audit
+# NOT imported at module level: app.pluginmanager.routes imports
+# admin_required from this module, so importing app.pluginmanager here too
+# (even indirectly, via app.pluginmanager.loader triggering
+# app/pluginmanager/__init__.py) would be a circular import before
+# admin_required is defined below. Imported lazily inside plugins() instead.
 
 
 def admin_required(view):
@@ -87,6 +92,8 @@ def delete_product(product_id):
 @bp.route("/plugins", methods=["GET", "POST"])
 @admin_required
 def plugins():
+    from app.pluginmanager.loader import BUILTIN_PLUGIN_NAMES, discover_plugins
+
     shop = current_shop()
     if request.method == "POST":
         selected = set(request.form.getlist("active_plugins"))
@@ -97,9 +104,52 @@ def plugins():
                 db.session.add(plugin)
             plugin.enabled = name in selected
         db.session.commit()
+        audit(actions.PLUGIN_TOGGLE, actor=current_user(), shop_id=shop.id,
+              detail=f"active_plugins={sorted(selected)}")
         flash("Plugin settings updated.", "success")
         return redirect(url_for("admin.plugins"))
 
-    enabled = {plugin.name for plugin in Plugin.query.filter_by(shop_id=shop.id, enabled=True).all()}
-    plugin_data = [{"name": name, "display_name": getattr(module, "PLUGIN_NAME", name), "description": getattr(module, "PLUGIN_DESCRIPTION", ""), "enabled": name in enabled} for name, module in discover_plugins()]
+    rows = {row.name: row for row in Plugin.query.filter_by(shop_id=shop.id).all()}
+    plugin_data = [
+        {
+            "name": name,
+            "display_name": getattr(module, "PLUGIN_NAME", name),
+            "description": getattr(module, "PLUGIN_DESCRIPTION", ""),
+            "enabled": rows[name].enabled if name in rows else False,
+            "is_third_party": rows[name].is_third_party if name in rows else name not in BUILTIN_PLUGIN_NAMES,
+        }
+        for name, module in discover_plugins()
+    ]
     return render_template("admin/plugins.html", plugins=plugin_data)
+
+
+@bp.route("/plugins/import", methods=["POST"])
+@admin_required
+def import_plugin():
+    from app.pluginmanager.loader import PluginValidationError, import_third_party_plugin
+
+    shop = current_shop()
+    name = request.form.get("name", "").strip().lower()
+    file = request.files.get("file")
+
+    try:
+        module = import_third_party_plugin(name, file)
+    except PluginValidationError as exc:
+        audit(actions.PLUGIN_IMPORT, actor=current_user(), shop_id=shop.id,
+              target_type="plugin", target_id=name, success=False, detail=str(exc))
+        flash(f"Could not import plugin: {exc}", "error")
+        return redirect(url_for("admin.plugins"))
+
+    plugin = Plugin.query.filter_by(shop_id=shop.id, name=name).first()
+    if plugin is None:
+        plugin = Plugin(shop_id=shop.id, name=name)
+        db.session.add(plugin)
+    plugin.is_third_party = True
+    plugin.enabled = False
+    db.session.commit()
+
+    display_name = getattr(module, "PLUGIN_NAME", name)
+    audit(actions.PLUGIN_IMPORT, actor=current_user(), shop_id=shop.id,
+          target_type="plugin", target_id=name, success=True, detail=f"display_name={display_name!r}")
+    flash(f'Imported "{display_name}" - enable it below to show it on your storefront.', "success")
+    return redirect(url_for("admin.plugins"))

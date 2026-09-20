@@ -1,3 +1,40 @@
 {% extends "base.html" %}
 {% block title %}Your cart | Petal & Stem{% endblock %}
-{% block content %}<div class="section-heading"><div><p class="eyebrow">Your selection</p><h1>Cart</h1></div><a class="back" href="{{ url_for('storefront.index') }}">Continue shopping →</a></div>{% if lines %}<form method="post" action="{{ url_for('storefront.update_cart') }}"><div class="cart-list">{% for item, product in lines %}<div class="cart-line"><div class="product-art mini art-{{ loop.index0 % 3 }}">✿</div><div class="cart-name"><h2>{{ product.name }}</h2><span class="muted">${{ "%.2f"|format(product.price) }} each</span></div><label>Qty <input type="number" name="quantity-{{ item.id }}" value="{{ item.quantity }}" min="0" max="{{ product.stock }}"></label><strong>${{ "%.2f"|format(product.price * item.quantity) }}</strong><button class="text-button" formaction="{{ url_for('storefront.remove_from_cart', item_id=item.id) }}" formmethod="post" type="submit">Remove</button></div>{% endfor %}</div><div class="cart-actions"><button class="button secondary" type="submit">Update cart</button><strong class="total">Total ${{ "%.2f"|format(total_cents / 100) }}</strong><button class="button" formaction="{{ url_for('storefront.checkout') }}" formmethod="post" type="submit">Place order</button></div></form>{% else %}<div class="empty-state"><h2>Your cart is waiting.</h2><p>Add something lovely and it will appear here.</p><a class="button" href="{{ url_for('storefront.index') }}">Browse products</a></div>{% endif %}{% endblock %}
+{% block content %}
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">Your selection</p>
+            <h1>Cart</h1>
+        </div>
+        <a class="back" href="{{ url_for('storefront.index') }}">Continue shopping →</a>
+    </div>
+    {% if lines %}
+        <form method="post" action="{{ url_for('storefront.update_cart') }}">
+            <div class="cart-list">
+                {% for item, product in lines %}
+                    <div class="cart-line">
+                        <div class="product-art mini art-{{ loop.index0 % 3 }}">✿</div>
+                        <div class="cart-name">
+                            <h2>{{ product.name }}</h2>
+                            <span class="muted">${{ "%.2f"|format(product.price) }} each</span>
+                        </div>
+                        <label>Qty <input type="number" name="quantity-{{ item.id }}" value="{{ item.quantity }}" min="0" max="{{ product.stock }}"></label>
+                        <strong>${{ "%.2f"|format(product.price * item.quantity) }}</strong>
+                        <button class="text-button" formaction="{{ url_for('storefront.remove_from_cart', item_id=item.id) }}" formmethod="post" type="submit">Remove</button>
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="cart-actions">
+                <button class="button secondary" type="submit">Update cart</button>
+                <strong class="total">Total ${{ "%.2f"|format(total_cents / 100) }}</strong>
+                <button class="button" formaction="{{ url_for('storefront.checkout') }}" formmethod="post" type="submit">Place order</button>
+            </div>
+        </form>
+    {% else %}
+        <div class="empty-state">
+            <h2>Your cart is waiting.</h2>
+            <p>Add something lovely and it will appear here.</p>
+            <a class="button" href="{{ url_for('storefront.index') }}">Browse products</a>
+        </div>
+    {% endif %}
+{% endblock %}

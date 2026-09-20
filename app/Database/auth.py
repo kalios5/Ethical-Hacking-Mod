@@ -29,9 +29,9 @@ In pluginmanager/routes.py, replace the hardcoded branch with:
         return redirect(url_for("pluginmanager.admin_dashboard"))
     return render_template("login.html", error="Invalid username or password")
 
-Seeded logins (see deployment/db/init/02_seed.sql):
+Seeded logins (see app/__init__.py::_seed_development_data()):
     superadmin / SuperSecret@2026   (role: superadmin)
-    admin      / Admin@123          (role: admin,    shop 1 roses-4-sale)
+    admin      / admin              (role: admin,    shop 1 roses-4-sale)
     admin      / Petal!2026         (role: admin,    shop 2 poppies-2-buy)
     alice      / password1          (role: customer)
 """
@@ -44,7 +44,7 @@ from app.Database.security import verify_password
 
 def _audit(*args, **kwargs):
     try:
-        from logging_setup.db_audit import audit
+        from app.logging.db_audit import audit
         audit(*args, **kwargs)
     except Exception:
         pass
@@ -57,7 +57,7 @@ def authenticate(username, password, shop_id=None, ip=None):
     users.failed_logins + users.last_login up to date so the admin console can
     show "suspicious activity" during the defender demo.
     """
-    from logging_setup.db_audit import actions
+    from app.logging.db_audit import actions
 
     q = User.query.filter_by(username=username)
     if shop_id is not None:
@@ -101,7 +101,7 @@ def authenticate(username, password, shop_id=None, ip=None):
 
 def create_user(shop_id, username, email, password, role="customer", mode='weak'):
     """Helper for the admin console / user-management member."""
-    from logging_setup.db_audit import actions
+    from app.logging.db_audit import actions
 
     user = User(shop_id=shop_id, username=username, email=email,
                 role=role, hash_mode=mode)

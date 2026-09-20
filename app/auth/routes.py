@@ -4,6 +4,7 @@ from flask import flash, redirect, render_template, request, session, url_for
 
 from app import db
 from app.auth import bp
+from app.Database.auth import authenticate
 from app.Database.models import User
 
 
@@ -28,8 +29,8 @@ def login():
     if request.method == "POST":
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "")
-        user = User.query.filter_by(username=username).first()
-        if user and user.is_active and user.check_password(password):
+        user = authenticate(username, password, ip=request.remote_addr)
+        if user:
             session.clear()
             session["user_id"] = user.id
             flash(f"Welcome back, {user.username}.", "success")

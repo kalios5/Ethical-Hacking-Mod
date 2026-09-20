@@ -1,4 +1,3 @@
-from flask_sqlalchemy import SQLAlchemy
 from app import db
 from datetime import datetime
 
@@ -136,7 +135,7 @@ class Plugin(db.Model):
 class AuditLog(db.Model):
     """Application-written security events. Also written by logging_setup."""
     __tablename__ = "audit_log"
-    id = db.Column(db.BigInteger(), primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
     ts = db.Column(db.DateTime, default=datetime.utcnow, index=True)
     actor_user_id = db.Column(db.Integer, index=True)
     actor_ip = db.Column(db.String(45))
@@ -146,15 +145,23 @@ class AuditLog(db.Model):
     target_id = db.Column(db.String(64))
     success = db.Column(db.Boolean, nullable=False, default=True)
     detail = db.Column(db.Text)
+    request_path = db.Column(db.String(255))
 
 
 class DbChangeLog(db.Model):
-    """Read-only view of the trigger-written DB change log."""
+    """DB change log, populated by the SQLAlchemy event listeners in
+    app/Database/audit_events.py rather than real DB-level triggers."""
     __tablename__ = "db_change_log"
-    id = db.Column(db.BigInteger(), primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
     ts = db.Column(db.DateTime, default=datetime.utcnow, index=True)
     db_user = db.Column(db.String(128), nullable=False)
     table_name = db.Column(db.String(64), nullable=False)
     op = db.Column(db.String(10), nullable=False)
     row_pk = db.Column(db.String(64))
     detail = db.Column(db.Text)
+
+
+# Registers the insert/update/delete listeners that back db_change_log /
+# audit_log for every mutable model above. Imported last so every model
+# class already exists when the listeners are attached.
+from app.Database import audit_events  # noqa: E402,F401

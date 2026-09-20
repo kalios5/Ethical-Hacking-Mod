@@ -4,7 +4,8 @@ from sqlalchemy import or_
 from app import db
 from app.auth.routes import current_user, login_required
 from app.Database.models import CartItem, Order, OrderItem, Plugin, Product, Shop
-from app.main.loader import get_plugin
+from app.logging.db_audit import actions, audit
+from app.pluginmanager.loader import get_plugin
 from app.storefront import bp
 
 
@@ -121,5 +122,7 @@ def checkout():
         db.session.add(OrderItem(order_id=order.id, product_id=product.id, quantity=item.quantity, unit_price_cents=product.price_cents))
         db.session.delete(item)
     db.session.commit()
+    audit(actions.ORDER_PLACED, actor=user, target_type="order", target_id=order.id,
+          detail=f"total_cents={total_cents}")
     flash(f"Order #{order.id} placed successfully.", "success")
     return redirect(url_for("storefront.index"))

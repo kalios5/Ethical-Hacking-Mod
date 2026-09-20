@@ -13,12 +13,13 @@ Docker-Escape PoC, which reads the logs folder).
 import logging
 import os
 import time
-from logging.handlers import RotatingFileHandler
+from logging.handlers import TimedRotatingFileHandler
 
 from flask import g, request
 
 LOG_DIR = os.environ.get("LOG_DIR", "logs")
 LOG_FILE = os.path.join(LOG_DIR, "app.log")
+LOG_RETENTION_DAYS = 7
 
 LOG_FORMAT = "%(asctime)s %(levelname)-7s [%(name)s] %(message)s"
 DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
@@ -31,8 +32,11 @@ def configure_logging(app):
     level = logging.DEBUG if app.config.get("DEBUG") else logging.INFO
     formatter = logging.Formatter(LOG_FORMAT, datefmt=DATE_FORMAT)
 
-    # Rotating file: 5 files x 2 MB each.
-    file_handler = RotatingFileHandler(LOG_FILE, maxBytes=2_000_000, backupCount=5)
+    # Rolls over once a day and keeps LOG_RETENTION_DAYS (~1 week) of history,
+    # deleting anything older - bounds logs/app.log by age, not just by size.
+    file_handler = TimedRotatingFileHandler(
+        LOG_FILE, when="midnight", interval=1, backupCount=LOG_RETENTION_DAYS,
+    )
     file_handler.setFormatter(formatter)
     file_handler.setLevel(level)
 
@@ -44,9 +48,9 @@ def configure_logging(app):
     root = logging.getLogger()
     root.setLevel(level)
     # Avoid duplicate handlers if configure_logging() is called twice.
-    if not any(isinstance(h, RotatingFileHandler) for h in root.handlers):
+    if not any(isinstance(h, TimedRotatingFileHandler) for h in root.handlers):
         root.addHandler(file_handler)
-    if not any(isinstance(h, logging.StreamHandler) and not isinstance(h, RotatingFileHandler)
+    if not any(isinstance(h, logging.StreamHandler) and not isinstance(h, TimedRotatingFileHandler)
                for h in root.handlers):
         root.addHandler(console)
 
@@ -81,7 +85,8 @@ def _install_request_logging(app):
             log.exception("request logging failed")
         return response
 
-    @app.errorhandler(Exception)
-    def _log_exception(err):
-        log.exception("Unhandled exception on %s %s", request.method, request.path)
-        raise err
+    # Unhandled-exception logging + the actual error response live in
+    # app/errors/routes.py (registered as its own blueprint in
+    # app/__init__.py::create_app()), which renders a page instead of
+    # re-raising - a second @app.errorhandler(Exception) here would just be
+    # silently overridden by that one anyway.

@@ -1,8 +1,50 @@
 {% extends "base.html" %}
 {% block title %}{{ shop.name }} | Shop{% endblock %}
 {% block content %}
-<section class="hero"><div><p class="eyebrow">{{ shop.name }}</p><h1>Small gestures,<br><em>beautifully arranged.</em></h1><p class="lede">Seasonal flowers and keepsakes for the people who matter.</p></div><div class="hero-mark">✳</div></section>
-<section class="toolbar"><form class="search" method="get"><input name="q" value="{{ query }}" placeholder="Search the collection" aria-label="Search products"><button class="button" type="submit">Search</button></form><span class="muted">{{ products|length }} pieces</span></section>
-{% if widgets %}<section class="widget-row">{% for widget in widgets %}{{ widget|safe }}{% endfor %}</section>{% endif %}
-<section class="product-grid">{% for product in products %}<article class="product-card"><div class="product-art art-{{ loop.index0 % 3 }}">✿</div><div class="product-info"><p class="eyebrow">In season</p><h2><a href="{{ url_for('storefront.product_detail', product_id=product.id) }}">{{ product.name }}</a></h2><p>{{ product.description }}</p><div class="product-foot"><strong>${{ "%.2f"|format(product.price) }}</strong>{% if product.stock %}<form method="post" action="{{ url_for('storefront.add_to_cart', product_id=product.id) }}"><button class="button small" type="submit">Add to cart</button></form>{% else %}<span class="muted">Sold out</span>{% endif %}</div></div></article>{% else %}<p class="empty">No products matched “{{ query }}”.</p>{% endfor %}</section>
+    <section class="hero">
+        <div>
+            <p class="eyebrow">{{ shop.name }}</p>
+            <h1>Small gestures,<br><em>beautifully arranged.</em></h1>
+            <p class="lede">Seasonal flowers and keepsakes for the people who matter.</p>
+        </div>
+        <div class="hero-mark">✳</div>
+    </section>
+    <section class="toolbar">
+        <form class="search" method="get">
+            <input name="q" value="{{ query }}" placeholder="Search the collection" aria-label="Search products">
+            <button class="button" type="submit">Search</button>
+        </form>
+        <span class="muted">{{ products|length }} pieces</span>
+    </section>
+    {% if widgets %}
+        <section class="widget-row">
+            {% for widget in widgets %}
+                {{ widget|safe }}
+            {% endfor %}
+        </section>
+    {% endif %}
+    <section class="product-grid">
+        {% for product in products %}
+            <article class="product-card">
+                <div class="product-art art-{{ loop.index0 % 3 }}">✿</div>
+                <div class="product-info">
+                    <p class="eyebrow">In season</p>
+                    <h2><a href="{{ url_for('storefront.product_detail', product_id=product.id) }}">{{ product.name }}</a></h2>
+                    <p>{{ product.description }}</p>
+                    <div class="product-foot">
+                        <strong>${{ "%.2f"|format(product.price) }}</strong>
+                        {% if product.stock %}
+                            <form method="post" action="{{ url_for('storefront.add_to_cart', product_id=product.id) }}">
+                                <button class="button small" type="submit">Add to cart</button>
+                            </form>
+                        {% else %}
+                            <span class="muted">Sold out</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </article>
+        {% else %}
+            <p class="empty">No products matched “{{ query }}”.</p>
+        {% endfor %}
+    </section>
 {% endblock %}

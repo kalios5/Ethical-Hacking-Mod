@@ -1,1 +1,35 @@
-{% extends "base.html" %}{% block title %}Plugins | Admin{% endblock %}{% block content %}<div class="section-heading"><div><p class="eyebrow">Admin / Storefront</p><h1>Plugins</h1></div><a class="back" href="{{ url_for('admin.dashboard') }}">← Dashboard</a></div><form method="post"><div class="plugin-list">{% for plugin in plugins %}<label class="plugin-row"><input type="checkbox" name="active_plugins" value="{{ plugin.name }}"{% if plugin.enabled %} checked{% endif %}><span><strong>{{ plugin.display_name }}</strong><small>{{ plugin.description }}</small></span></label>{% endfor %}</div><button class="button" type="submit">Save plugin settings</button></form>{% endblock %}
+{% extends "base.html" %}
+{% block title %}Plugins | Admin{% endblock %}
+{% block content %}
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">Admin / Storefront</p>
+            <h1>Plugins</h1>
+        </div>
+        <a class="back" href="{{ url_for('admin.dashboard') }}">← Dashboard</a>
+    </div>
+    <form method="post">
+        <div class="plugin-list">
+            {% for plugin in plugins %}
+                <label class="plugin-row">
+                    <input type="checkbox" name="active_plugins" value="{{ plugin.name }}"{% if plugin.enabled %} checked{% endif %}>
+                    <span>
+                        <strong>{{ plugin.display_name }}{% if plugin.is_third_party %} <span class="muted">(third-party)</span>{% endif %}</strong>
+                        <small>{{ plugin.description }}</small>
+                    </span>
+                </label>
+            {% endfor %}
+        </div>
+        <button class="button" type="submit">Save plugin settings</button>
+    </form>
+    <form class="form-card" method="post" action="{{ url_for('admin.import_plugin') }}" enctype="multipart/form-data">
+        <h2>Import a plugin</h2>
+        <label>Plugin name
+            <input name="name" pattern="[a-z][a-z0-9_]{1,49}" placeholder="e.g. loyalty_points" required>
+        </label>
+        <label>Plugin .zip
+            <input type="file" name="file" accept=".zip" required>
+        </label>
+        <button class="button" type="submit">Import plugin</button>
+    </form>
+{% endblock %}

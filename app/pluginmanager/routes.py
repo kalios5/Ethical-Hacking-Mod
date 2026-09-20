@@ -1,14 +1,12 @@
 from flask import render_template, request, redirect, url_for
-from app.main import bp
-from app.main.loader import discover_plugins, get_plugin
+from app.admin.routes import admin_required
+from app.pluginmanager import bp
+from app.pluginmanager.loader import discover_plugins, get_plugin
 from app.Database.models import db, PluginToggle
-
-@bp.route('/')
-def home():
-    return "<h1>hi</h1>"
 
 
 @bp.route("/plugins", methods=["GET", "POST"])
+@admin_required
 def plugin_list():
     if request.method == "POST":
         selected = request.form.getlist("active_plugins")
@@ -19,7 +17,7 @@ def plugin_list():
                 db.session.add(toggle)
             toggle.enabled = name in selected
         db.session.commit()
-        return redirect(url_for("main.plugin_list"))
+        return redirect(url_for("pluginmanager.plugin_list"))
 
     plugins_data = []
     for name, module in discover_plugins():
@@ -38,6 +36,7 @@ def plugin_list():
 
 
 @bp.route("/preview")
+@admin_required
 def storefront_preview():
     outputs = []
     for toggle in PluginToggle.query.filter_by(enabled=True).all():

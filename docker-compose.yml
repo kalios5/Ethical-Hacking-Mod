@@ -33,6 +33,7 @@ services:
 
   app:
     environment:
+      APP_CONFIG: production
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}
@@ -42,6 +43,7 @@ services:
     restart: always
     volumes:
       - ./.env:/.env
+      - ./logs:/logs
     networks:
       - application
     ports:

@@ -1,1 +1,21 @@
-{% extends "base.html" %}{% block title %}Create account | Petal & Stem{% endblock %}{% block content %}<section class="form-page"><p class="eyebrow">Join the garden</p><h1>Create account</h1><form class="form-card" method="post"><label>Username<input name="username" required></label><label>Email<input type="email" name="email" required></label><label>Password<input type="password" name="password" minlength="8" required></label><button class="button" type="submit">Create account</button><p class="muted">Already registered? <a href="{{ url_for('auth.login') }}">Log in</a></p></form></section>{% endblock %}
+{% extends "base.html" %}
+{% block title %}Create account | Petal & Stem{% endblock %}
+{% block content %}
+    <section class="form-page">
+        <p class="eyebrow">Join the garden</p>
+        <h1>Create account</h1>
+        <form class="form-card" method="post">
+            <label>Username
+                <input name="username" required>
+            </label>
+            <label>Email
+                <input type="email" name="email" required>
+            </label>
+            <label>Password
+                <input type="password" name="password" minlength="8" required>
+            </label>
+            <button class="button" type="submit">Create account</button>
+            <p class="muted">Already registered? <a href="{{ url_for('auth.login') }}">Log in</a></p>
+        </form>
+    </section>
+{% endblock %}

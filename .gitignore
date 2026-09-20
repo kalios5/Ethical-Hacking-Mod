@@ -1,3 +1,12 @@
 .py_venv/*
 __pycache__/
 *.py[cod]
+
+# Secrets - copy .env.example instead.
+.env
+
+# Local/dev SQLite DB - regenerated on boot by app/__init__.py.
+app/app.db
+
+# Rotated app logs (see app/logging/app_logging.py).
+logs/
