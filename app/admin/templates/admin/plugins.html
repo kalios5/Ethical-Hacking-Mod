@@ -1,5 +1,6 @@
 {% extends "base.html" %}
-{% block title %}Plugins | Admin{% endblock %}
+{% block title %}Plugins | Admin    <p><a href="{{ url_for('admin.upload_plugin') }}">Upload a single-file plugin →</a></p>
+{% endblock %}
 {% block content %}
     <div class="section-heading">
         <div>
@@ -32,4 +33,5 @@
         </label>
         <button class="button" type="submit">Import plugin</button>
     </form>
+    <p><a href="{{ url_for('admin.upload_plugin') }}">Upload a single-file plugin →</a></p>
 {% endblock %}
