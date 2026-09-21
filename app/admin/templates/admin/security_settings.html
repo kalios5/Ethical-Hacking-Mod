@@ -3,12 +3,33 @@
     <div><p class="eyebrow">Admin / Storefront</p><h1>Security Features</h1></div>
     <a class="back" href="{{ url_for('admin.dashboard') }}">← Dashboard</a>
 </div>
-<form method="post">
+<form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+{% for t in toggles %}
     <label class="plugin-row">
-        <input type="checkbox" name="enabled" {% if toggle.enabled %}checked{% endif %}>
-        <span><strong>Temporary Account Lockout</strong>
-        <small>Locks an account for a cooldown period after 5 failed logins.</small></span>
+        <input type="checkbox" name="enabled_features" value="{{ t.name }}" {% if t.enabled %}checked{% endif %}>
+        <span><strong>{{ t.display_name }}</strong>
+        <small>{{ t.description }}</small></span>
     </label><br>
+{% endfor %}
     <button class="button" type="submit">Save</button>
 </form>
+
+<h2>Currently Locked-Out Accounts</h2>
+{% if locked_accounts %}
+<table>
+    <thead><tr><th>Username</th><th>Shop</th><th>Time Remaining</th><th>Strikes</th></tr></thead>
+    <tbody>
+    {% for a in locked_accounts %}
+        <tr>
+            <td>{{ a.username }}</td>
+            <td>Shop #{{ a.shop_id }}</td>
+            <td>{{ a.seconds_remaining }}s</td>
+            <td>{{ a.strikes }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p><small>No accounts are currently locked out.</small></p>
+{% endif %}
 {% endblock %}

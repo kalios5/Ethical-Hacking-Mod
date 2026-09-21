@@ -4,7 +4,7 @@
     <a class="back" href="{{ url_for('admin.plugins') }}">← Plugins</a>
 </div>
 {% if error %}<div class="notice error">{{ error }}</div>{% endif %}
-<form method="post" enctype="multipart/form-data">
+<form method="post" enctype="multipart/form-data"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <label>Plugin folder name (letters, numbers, underscores only)<br>
         <input type="text" name="plugin_name" required>
     </label><br><br>
