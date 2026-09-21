@@ -1,5 +1,5 @@
 <h1>Manage Plugins</h1>
-<form method="post">
+<form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     {% for p in plugins %}
         <label>
             <input type="checkbox" name="active_plugins" value="{{ p.name }}"
