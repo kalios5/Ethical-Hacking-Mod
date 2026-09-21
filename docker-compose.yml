@@ -2,6 +2,7 @@ services:
   nginx:
     image: nginx:latest
     container_name: nginx-proxy
+    restart: always
     ports:
       - "80:80"
     volumes:
@@ -40,7 +41,7 @@ services:
     build:
       context: .
       dockerfile: deployment/Dockerfile
-    container_name: WebApplication
+    container_name: app
     restart: always
     volumes:
       - ./.env:/.env

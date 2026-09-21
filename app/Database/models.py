@@ -33,7 +33,7 @@ class User(db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     hash_mode = db.Column(db.String(16), nullable=False, default="weak")
     role = db.Column(
-        db.Enum("guest", "customer", "admin", "superadmin"),
+        db.Enum("guest", "customer", "admin", "superadmin",name="user_types"),
         nullable=False,
         default="customer",
     )
@@ -99,7 +99,7 @@ class Order(db.Model):
     shop_id = db.Column(db.Integer, db.ForeignKey("shops.id"), nullable=False)
     total_cents = db.Column(db.Integer, nullable=False, default=0)
     status = db.Column(
-        db.Enum("pending", "paid", "shipped", "cancelled"),
+        db.Enum("pending", "paid", "shipped", "cancelled",name="order_state"),
         nullable=False,
         default="pending",
     )

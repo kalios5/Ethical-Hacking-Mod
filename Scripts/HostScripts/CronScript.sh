@@ -29,7 +29,7 @@ HOST_LOG_ROOT="/logs"
 
 # Only collect from containers whose names match this prefix,
 # so the collector doesn't touch unrelated containers.
-TENANT_PREFIX=""
+TENANT_PREFIX="app"
 
 # How long (seconds) to wait between collection cycles when
 # running in loop mode (--loop flag). Cron mode ignores this.

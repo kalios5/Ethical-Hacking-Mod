@@ -7,7 +7,7 @@ from app.auth import bp
 from app.Database.auth import authenticate
 from app.logging.db_audit import actions, audit
 from app.Database.models import User, Plugin
-from security_plugins.temp_lockout import is_locked_out, record_failed_attempt, seconds_remaining
+from app.plugins.security_plugins.temp_lockout import is_locked_out, record_failed_attempt, seconds_remaining
 
 
 def current_user():
