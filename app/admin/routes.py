@@ -11,6 +11,7 @@ from app.admin.validators import validate_plugin_format
 from app.auth.routes import current_user, login_required
 from app.Database.models import Order, Plugin, Product, Shop, User
 from app.logging.db_audit import actions, audit
+from extensions import limiter
 # NOT imported at module level: app.pluginmanager.routes imports
 # admin_required from this module, so importing app.pluginmanager here too
 # (even indirectly, via app.pluginmanager.loader triggering
@@ -137,6 +138,7 @@ def plugins():
 
 @bp.route("/plugins/import", methods=["POST"])
 @admin_required
+@limiter.limit("5 per minute")
 def import_plugin():
     from app.pluginmanager.loader import PluginValidationError, import_third_party_plugin
 
@@ -169,6 +171,7 @@ def import_plugin():
 
 @bp.route("/plugins/upload", methods=["GET", "POST"])
 @admin_required
+@limiter.limit("5 per minute")
 def upload_plugin():
     from app.pluginmanager.loader import BUILTIN_PLUGIN_NAMES
 
@@ -224,25 +227,57 @@ def upload_plugin():
     return render_template("admin/upload_plugin.html", error=error)
 
 
+SECURITY_PLUGIN_NAMES = ["temp_lockout", "new_device_alert", "ip_rate_limit"]
+
+
 @bp.route("/security-settings", methods=["GET", "POST"])
 @admin_required
+@limiter.limit("10 per minute")
 def security_settings():
-    # separate from /admin/plugins. That route toggles uploadable plugins
-    # This toggles a TRUSTED security feature.
+    # separate from /admin/plugins. That route toggles UNTRUSTED,
+    # uploadable plugins (app/plugins/, discovered dynamically). This
+    # toggles TRUSTED, statically-imported security features.
+    import importlib
+
     shop = current_shop()
-    toggle = Plugin.query.filter_by(shop_id=shop.id, name="temp_lockout").first()
-    if not toggle:
-        toggle = Plugin(shop_id=shop.id, name="temp_lockout", enabled=True, is_third_party=False)
-        db.session.add(toggle)
-        db.session.commit()
+    toggles = []
+    for name in SECURITY_PLUGIN_NAMES:
+        module = importlib.import_module(f"app.security_plugins.{name}")
+        row = Plugin.query.filter_by(shop_id=shop.id, name=name).first()
+        if not row:
+            row = Plugin(shop_id=shop.id, name=name, enabled=True, is_third_party=False)
+            db.session.add(row)
+            db.session.commit()
+        toggles.append({
+            "name": name,
+            "display_name": module.PLUGIN_NAME,
+            "description": module.PLUGIN_DESCRIPTION,
+            "enabled": row.enabled,
+        })
 
     if request.method == "POST":
-        toggle.enabled = "enabled" in request.form
+        selected = set(request.form.getlist("enabled_features"))
+        for name in SECURITY_PLUGIN_NAMES:
+            row = Plugin.query.filter_by(shop_id=shop.id, name=name).first()
+            row.enabled = name in selected
         db.session.commit()
         audit(actions.PLUGIN_TOGGLE, actor=current_user(), shop_id=shop.id,
-              target_type="plugin", target_id="temp_lockout",
-              detail=f"enabled={toggle.enabled}")
+              target_type="security_feature", detail=f"enabled={sorted(selected)}")
         flash("Security settings updated.", "success")
         return redirect(url_for("admin.security_settings"))
 
-    return render_template("admin/security_settings.html", toggle=toggle)
+    # Admin visibility into currently active temp_lockout cooldowns —
+    # reads directly from the in-memory tracker, no separate storage.
+    from app.security_plugins.temp_lockout import current_lockouts
+    locked_accounts = []
+    for entry in current_lockouts():
+        locked_user = User.query.get(entry["user_id"])
+        if locked_user:
+            locked_accounts.append({
+                "username": locked_user.username,
+                "shop_id": locked_user.shop_id,
+                "seconds_remaining": entry["seconds_remaining"],
+                "strikes": entry["strikes"],
+            })
+
+    return render_template("admin/security_settings.html", toggles=toggles, locked_accounts=locked_accounts)
