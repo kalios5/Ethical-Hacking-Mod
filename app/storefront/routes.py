@@ -1,3 +1,5 @@
+import bleach
+
 from flask import abort, flash, redirect, render_template, request, url_for
 from sqlalchemy import or_
 
@@ -7,6 +9,9 @@ from app.Database.models import CartItem, Order, OrderItem, Plugin, Product, Sho
 from app.logging.db_audit import actions, audit
 from app.pluginmanager.loader import get_plugin
 from app.storefront import bp
+
+ALLOWED_TAGS = ["div", "span", "p", "form", "input", "button", "strong", "em", "br"]
+ALLOWED_ATTRS = {"input": ["type", "placeholder"], "*": ["class"]}
 
 
 def current_shop():
@@ -26,7 +31,13 @@ def index():
     widgets = []
     for plugin in plugins:
         try:
-            widgets.append(get_plugin(plugin.name).render_widget({"customer_name": current_user().username if current_user() else "Guest"}))
+            raw_html = get_plugin(plugin.name).render_widget({"customer_name": current_user().username if current_user() else "Guest"})
+            # Sanitize before rendering. Plugin authors (especially
+            # is_third_party=True uploads) are semi-trusted at best — their
+            # HTML output shouldn't be able to run script in a customer's
+            # browser. Separate concern from the RCE-on-import
+            # vulnerability, which happens server-side and is untouched.
+            widgets.append(bleach.clean(raw_html, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRS))
         except (ImportError, AttributeError):
             continue
     return render_template("storefront/index.html", shop=shop, products=products, query=query, widgets=widgets)
