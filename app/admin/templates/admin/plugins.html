@@ -1,6 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Plugins | Admin    <p><a href="{{ url_for('admin.upload_plugin') }}">Upload a single-file plugin →</a></p>
-{% endblock %}
+{% block title %}Plugins | Admin{% endblock %}
 {% block content %}
     <div class="section-heading">
         <div>
@@ -9,7 +8,7 @@
         </div>
         <a class="back" href="{{ url_for('admin.dashboard') }}">← Dashboard</a>
     </div>
-    <form method="post">
+    <form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="plugin-list">
             {% for plugin in plugins %}
                 <label class="plugin-row">
@@ -23,7 +22,7 @@
         </div>
         <button class="button" type="submit">Save plugin settings</button>
     </form>
-    <form class="form-card" method="post" action="{{ url_for('admin.import_plugin') }}" enctype="multipart/form-data">
+    <form class="form-card" method="post" action="{{ url_for('admin.import_plugin') }}" enctype="multipart/form-data"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <h2>Import a plugin</h2>
         <label>Plugin name
             <input name="name" pattern="[a-z][a-z0-9_]{1,49}" placeholder="e.g. loyalty_points" required>

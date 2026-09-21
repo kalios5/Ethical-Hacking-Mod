@@ -4,9 +4,12 @@ from flask import Flask
 from app.config import *
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from flask_wtf import CSRFProtect
+from extensions import limiter
 #from flask_login import LoginManager
 db = SQLAlchemy()
 migrate = Migrate()
+csrf = CSRFProtect()
 #login = LoginManager()
 
 # APP_CONFIG=production (set by docker-compose.yml) -> ProductionConfig/Postgres.
@@ -25,6 +28,8 @@ def create_app(config_class=None):
 
     db.init_app(app)
     migrate.init_app(app,db)
+    csrf.init_app(app)
+    limiter.init_app(app)
 
     from app.Database import models
     # admin must import before pluginmanager: pluginmanager.routes imports
@@ -40,6 +45,18 @@ def create_app(config_class=None):
     app.register_blueprint(admin_bp, url_prefix="/admin")
     app.register_blueprint(storefront_bp)
     app.register_blueprint(errors_bp)  # no routes, only app-wide error handlers
+
+    # CSRF is scoped to ONLY the plugin/plugin-uploader routes rather than
+    # the whole site. Everything else - login, register, account, cart,
+    # checkout, product management - is explicitly exempted so this
+    # doesn't touch unrelated site functionality. admin.plugins,
+    # admin.import_plugin, admin.upload_plugin, admin.security_settings,
+    # and the legacy pluginmanager.plugin_list stay protected.
+    csrf.exempt(auth_bp)
+    csrf.exempt(storefront_bp)
+    csrf.exempt(app.view_functions["admin.products"])
+    csrf.exempt(app.view_functions["admin.edit_product"])
+    csrf.exempt(app.view_functions["admin.delete_product"])
 
     @app.context_processor
     def inject_current_user():
