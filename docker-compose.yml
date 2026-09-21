@@ -40,7 +40,7 @@ services:
     build:
       context: .
       dockerfile: deployment/Dockerfile
-      container_name: WebApplication
+    container_name: WebApplication
     restart: always
     volumes:
       - ./.env:/.env
