@@ -11,7 +11,7 @@ from app.admin.validators import validate_plugin_format
 from app.auth.routes import current_user, login_required
 from app.Database.models import Order, Plugin, Product, Shop, User
 from app.logging.db_audit import actions, audit
-from extensions import limiter
+from app import limiter
 # NOT imported at module level: app.pluginmanager.routes imports
 # admin_required from this module, so importing app.pluginmanager here too
 # (even indirectly, via app.pluginmanager.loader triggering
