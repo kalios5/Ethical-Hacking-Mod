@@ -22,6 +22,15 @@
         </div>
         <button class="button" type="submit">Save plugin settings</button>
     </form>
-    
-    <p><a href="{{ url_for('admin.upload_plugin') }}">Upload a plugin →</a></p>
+    <form class="form-card" method="post" action="{{ url_for('admin.import_plugin') }}" enctype="multipart/form-data"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <h2>Import a plugin</h2>
+        <label>Plugin name
+            <input name="name" pattern="[a-z][a-z0-9_]{1,49}" placeholder="e.g. loyalty_points" required>
+        </label>
+        <label>Plugin .zip
+            <input type="file" name="file" accept=".zip" required>
+        </label>
+        <button class="button" type="submit">Import plugin</button>
+    </form>
+    <p><a href="{{ url_for('admin.upload_plugin') }}">Upload a single-file plugin →</a></p>
 {% endblock %}

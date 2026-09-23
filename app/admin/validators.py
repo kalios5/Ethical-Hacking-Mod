@@ -20,18 +20,8 @@ BLOCKED_MODULES = {
     "ctypes", "shutil", "pty", "pickle",
 }
 
-# Legitimate plugins are tiny. A hard line cap narrows how much an attacker
-# can smuggle in without closing the vulnerability - a reverse-shell payload
-# inside render_widget() is only a handful of lines and fits easily. This is
-# containment-by-size, not a safety guarantee.
-MAX_PLUGIN_LINES = 60
-
 
 def validate_plugin_format(source_code: str):
-    line_count = len(source_code.splitlines())
-    if line_count > MAX_PLUGIN_LINES:
-        return False, f"Plugin is too long ({line_count} lines; max {MAX_PLUGIN_LINES})."
-
     try:
         tree = ast.parse(source_code)
     except SyntaxError as e:

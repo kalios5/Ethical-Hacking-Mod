@@ -136,6 +136,39 @@ def plugins():
     return render_template("admin/plugins.html", plugins=plugin_data)
 
 
+@bp.route("/plugins/import", methods=["POST"])
+@admin_required
+@limiter.limit("5 per minute")
+def import_plugin():
+    from app.pluginmanager.loader import PluginValidationError, import_third_party_plugin
+
+    shop = current_shop()
+    name = request.form.get("name", "").strip().lower()
+    file = request.files.get("file")
+
+    try:
+        module = import_third_party_plugin(name, file)
+    except PluginValidationError as exc:
+        audit(actions.PLUGIN_IMPORT, actor=current_user(), shop_id=shop.id,
+              target_type="plugin", target_id=name, success=False, detail=str(exc))
+        flash(f"Could not import plugin: {exc}", "error")
+        return redirect(url_for("admin.plugins"))
+
+    plugin = Plugin.query.filter_by(shop_id=shop.id, name=name).first()
+    if plugin is None:
+        plugin = Plugin(shop_id=shop.id, name=name)
+        db.session.add(plugin)
+    plugin.is_third_party = True
+    plugin.enabled = False
+    db.session.commit()
+
+    display_name = getattr(module, "PLUGIN_NAME", name)
+    audit(actions.PLUGIN_IMPORT, actor=current_user(), shop_id=shop.id,
+          target_type="plugin", target_id=name, success=True, detail=f"display_name={display_name!r}")
+    flash(f'Imported "{display_name}" - enable it below to show it on your storefront.', "success")
+    return redirect(url_for("admin.plugins"))
+
+
 @bp.route("/plugins/upload", methods=["GET", "POST"])
 @admin_required
 @limiter.limit("5 per minute")
@@ -176,50 +209,20 @@ def upload_plugin():
                         with open(os.path.join(plugin_folder, "__init__.py"), "wb") as f:
                             f.write(source_bytes)
 
-                        # Import + render once to validate the plugin works,
-                        # with the same filesystem containment used on the
-                        # storefront render path. A file-stealing payload in
-                        # render_widget() is caught here (PermissionError) and
-                        # the half-installed plugin is rolled back. The
-                        # intended reverse-shell vuln is network-based, not
-                        # filesystem-based, so it is NOT blocked by this.
-                        from app.pluginmanager.loader import _purge_module_cache_safe
-                        from app.pluginmanager.sandbox import restricted_filesystem
-                        import importlib, shutil
-                        try:
-                            _purge_module_cache_safe(plugin_name)
-                            module = importlib.import_module(f"app.plugins.{plugin_name}")
-                            render_widget = getattr(module, "render_widget", None)
-                            if not callable(render_widget):
-                                raise ValueError("Plugin has no render_widget(context) function.")
-                            with restricted_filesystem(plugin_folder):
-                                output = render_widget({"customer_name": "Preview"})
-                            if not isinstance(output, str):
-                                raise ValueError("render_widget() must return a string of HTML.")
-                        except PermissionError as exc:
-                            shutil.rmtree(plugin_folder, ignore_errors=True)
-                            _purge_module_cache_safe(plugin_name)
-                            error = f"Plugin rejected: {exc}"
-                        except Exception as exc:
-                            shutil.rmtree(plugin_folder, ignore_errors=True)
-                            _purge_module_cache_safe(plugin_name)
-                            error = f"Plugin failed validation: {exc}"
+                        # Mark it as third-party in the model
+                        plugin_row = Plugin.query.filter_by(shop_id=shop.id, name=plugin_name).first()
+                        if not plugin_row:
+                            plugin_row = Plugin(shop_id=shop.id, name=plugin_name)
+                            db.session.add(plugin_row)
+                        plugin_row.is_third_party = True
+                        plugin_row.enabled = False
+                        db.session.commit()
 
-                        if error is None:
-                            # Mark it as third-party in the model
-                            plugin_row = Plugin.query.filter_by(shop_id=shop.id, name=plugin_name).first()
-                            if not plugin_row:
-                                plugin_row = Plugin(shop_id=shop.id, name=plugin_name)
-                                db.session.add(plugin_row)
-                            plugin_row.is_third_party = True
-                            plugin_row.enabled = False
-                            db.session.commit()
-
-                            audit(actions.PLUGIN_IMPORT, actor=current_user(), shop_id=shop.id,
-                                  target_type="plugin", target_id=plugin_name, success=True,
-                                  detail="single-file upload")
-                            flash("Plugin uploaded - enable it on the plugins page to show it on your storefront.", "success")
-                            return redirect(url_for("admin.plugins"))
+                        audit(actions.PLUGIN_IMPORT, actor=current_user(), shop_id=shop.id,
+                              target_type="plugin", target_id=plugin_name, success=True,
+                              detail="single-file upload")
+                        flash("Plugin uploaded - enable it on the plugins page to show it on your storefront.", "success")
+                        return redirect(url_for("admin.plugins"))
 
     return render_template("admin/upload_plugin.html", error=error)
 
