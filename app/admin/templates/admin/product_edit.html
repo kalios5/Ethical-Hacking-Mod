@@ -4,7 +4,7 @@
     <section class="form-page">
         <p class="eyebrow">Admin / Catalogue</p>
         <h1>Edit product</h1>
-        <form class="form-card" method="post">
+        <form class="form-card" method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <label>Name
                 <input name="name" value="{{ product.name }}" required>
             </label>
