@@ -9,7 +9,7 @@
         <a class="back" href="{{ url_for('admin.dashboard') }}">← Dashboard</a>
     </div>
     <div class="admin-grid">
-        <form class="form-card" method="post">
+        <form class="form-card" method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <h2>Add product</h2>
             <label>Name
                 <input name="name" required>
@@ -34,7 +34,7 @@
                     </div>
                     <div>
                         <a class="text-button" href="{{ url_for('admin.edit_product', product_id=product.id) }}">Edit</a>
-                        <form class="inline" method="post" action="{{ url_for('admin.delete_product', product_id=product.id) }}">
+                        <form class="inline" method="post" action="{{ url_for('admin.delete_product', product_id=product.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button class="text-button danger" type="submit">Delete</button>
                         </form>
                     </div>

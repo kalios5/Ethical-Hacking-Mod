@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Set up two-factor authentication | Petal & Stem{% endblock %}
+{% block content %}
+    <section class="form-page">
+        <p class="eyebrow">Account security</p>
+        <h1>Set up two-factor authentication</h1>
+        <ol class="muted">
+            <li>Scan this QR code with an authenticator app (Google Authenticator, Authy, etc.).</li>
+            <li>Or enter this key manually: <code>{{ secret }}</code></li>
+            <li>Enter the 6-digit code the app shows, to confirm.</li>
+        </ol>
+        <img src="{{ qr }}" alt="2FA QR code" style="max-width:200px;height:auto;">
+        <form class="form-card" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <label>Code from your app
+                <input type="text" name="code" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" autofocus required>
+            </label>
+            <button class="button" type="submit">Confirm &amp; enable</button>
+        </form>
+    </section>
+{% endblock %}
