@@ -1,8 +1,9 @@
 FROM python:latest
 
 
-RUN apt update \
-    && apt install -y gcc libpq-dev postgresql-client
+RUN apt update  && \
+    aptinstall -y --no-install-recommends cron && \
+    apt install -y gcc libpq-dev postgresql-client
 COPY deployment/requirements.txt requirements.txt
 RUN pip install -r requirements.txt
 RUN pip install gunicorn
