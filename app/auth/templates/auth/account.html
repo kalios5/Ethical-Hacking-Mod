@@ -4,7 +4,7 @@
     <section class="form-page">
         <p class="eyebrow">Account settings</p>
         <h1>{{ user.username }}</h1>
-        <form class="form-card" method="post">
+        <form class="form-card" method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <label>Email
                 <input type="email" name="email" value="{{ user.email }}" required>
             </label>
@@ -13,5 +13,19 @@
             </label>
             <button class="button" type="submit">Save changes</button>
         </form>
+
+        <div class="form-card">
+            <h2>Two-factor authentication</h2>
+            {% if user.twofa_enabled %}
+                <p class="muted">Status: <strong>Enabled</strong>. Your account asks for a code at login.</p>
+                <form method="post" action="{{ url_for('auth.two_factor_disable') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="button" type="submit">Disable 2FA</button>
+                </form>
+            {% else %}
+                <p class="muted">Status: <strong>Not enabled</strong>. Add a second layer of protection with an authenticator app.</p>
+                <a class="button" href="{{ url_for('auth.two_factor_setup') }}">Set up 2FA</a>
+            {% endif %}
+        </div>
     </section>
 {% endblock %}
