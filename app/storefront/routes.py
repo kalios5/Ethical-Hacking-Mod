@@ -1,3 +1,5 @@
+import os
+
 import bleach
 
 from flask import abort, flash, redirect, render_template, request, url_for
@@ -7,7 +9,8 @@ from app import db
 from app.auth.routes import current_user, login_required
 from app.Database.models import CartItem, Order, OrderItem, Plugin, Product, Shop
 from app.logging.db_audit import actions, audit
-from app.pluginmanager.loader import get_plugin
+from app.pluginmanager.loader import get_plugin, PLUGINS_DIR
+from app.pluginmanager.sandbox import restricted_filesystem
 from app.storefront import bp
 
 ALLOWED_TAGS = ["div", "span", "p", "form", "input", "button", "strong", "em", "br"]
@@ -31,7 +34,16 @@ def index():
     widgets = []
     for plugin in plugins:
         try:
-            raw_html = get_plugin(plugin.name).render_widget({"customer_name": current_user().username if current_user() else "Guest"})
+            module = get_plugin(plugin.name)
+            plugin_dir = os.path.join(PLUGINS_DIR, plugin.name)
+            # Restrict the plugin's filesystem reach to its own folder while
+            # its widget renders (see app/pluginmanager/sandbox.py). This is
+            # an application-level, deliberately-bypassable containment - it
+            # stops a naive file-stealing payload, NOT the intended
+            # reverse-shell (which is network-based, not filesystem-based).
+            # True isolation is the Part 2 container boundary's job.
+            with restricted_filesystem(plugin_dir):
+                raw_html = module.render_widget({"customer_name": current_user().username if current_user() else "Guest"})
             # Sanitize before rendering. Plugin authors (especially
             # is_third_party=True uploads) are semi-trusted at best — their
             # HTML output shouldn't be able to run script in a customer's
