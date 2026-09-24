@@ -12,7 +12,7 @@ from flask_limiter.util import get_remote_address
 db = SQLAlchemy()
 migrate = Migrate()
 csrf = CSRFProtect()
-limiter = Limiter(key_func=get_remote_address, storage_uri="memory://")
+limiter = Limiter(key_func=get_remote_address)
 #login = LoginManager()
 
 # APP_CONFIG=production (set by docker-compose.yml) -> ProductionConfig/Postgres.
@@ -49,9 +49,17 @@ def create_app(config_class=None):
     app.register_blueprint(storefront_bp)
     app.register_blueprint(errors_bp)  # no routes, only app-wide error handlers
 
-    # CSRF protection is enabled site-wide (csrf.init_app above). Every POST
-    # form across the app carries a {{ csrf_token() }} hidden field. No
-    # route is exempted.
+    # CSRF is scoped to ONLY the plugin/plugin-uploader routes rather than
+    # the whole site. Everything else - login, register, account, cart,
+    # checkout, product management - is explicitly exempted so this
+    # doesn't touch unrelated site functionality. admin.plugins,
+    # admin.import_plugin, admin.upload_plugin, admin.security_settings,
+    # and the legacy pluginmanager.plugin_list stay protected.
+    csrf.exempt(auth_bp)
+    csrf.exempt(storefront_bp)
+    csrf.exempt(app.view_functions["admin.products"])
+    csrf.exempt(app.view_functions["admin.edit_product"])
+    csrf.exempt(app.view_functions["admin.delete_product"])
 
     @app.context_processor
     def inject_current_user():

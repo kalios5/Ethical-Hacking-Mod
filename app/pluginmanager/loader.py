@@ -33,7 +33,6 @@ _NAME_RE = re.compile(r"^[a-z][a-z0-9_]{1,49}$")
 
 MAX_ZIP_ENTRIES = 200
 MAX_ZIP_UNCOMPRESSED_BYTES = 2 * 1024 * 1024  # 2 MB, hygiene not a hard limit
-MAX_COMPRESSION_RATIO = 100  # uncompressed/compressed; a real plugin zip is well under this
 
 
 class PluginValidationError(Exception):
@@ -108,19 +107,6 @@ def _extract_zip_safely(file_storage, staging_dir):
                 f"Zip is too large uncompressed (max {MAX_ZIP_UNCOMPRESSED_BYTES // 1024} KB)."
             )
 
-        # Zip-bomb / compression-ratio guard. The uncompressed cap above
-        # doesn't catch an archive that stays small uncompressed but is
-        # crafted with an extreme compression ratio to exhaust CPU/memory
-        # during extraction. Reject anything whose uncompressed size is more
-        # than MAX_COMPRESSION_RATIO x its compressed size. This protects a
-        # DIFFERENT vector (resource exhaustion / DoS) and does not affect a
-        # normal plugin+payload zip, whose ratio is nowhere near this.
-        compressed_size = sum(i.compress_size for i in infos)
-        if compressed_size > 0 and total_size / compressed_size > MAX_COMPRESSION_RATIO:
-            raise PluginValidationError(
-                "Zip rejected: suspicious compression ratio (possible zip bomb)."
-            )
-
         for info in infos:
             if info.filename.startswith("..") or "/../" in info.filename or "\\..\\" in info.filename:
                 raise PluginValidationError(f"Zip entry uses a parent path: {info.filename!r}")
@@ -185,35 +171,6 @@ def _purge_module_cache(name):
     prefix = f"app.plugins.{name}"
     for key in [k for k in sys.modules if k == prefix or k.startswith(prefix + ".")]:
         del sys.modules[key]
-
-
-def read_zip_manifest(file_storage):
-    """Returns a list of (filename, uncompressed_size) for every entry in an
-    uploaded zip, WITHOUT extracting or executing anything. Used purely for
-    audit logging - it records exactly what an upload contained (a full file
-    manifest, not just __init__.py) so any malicious upload leaves a
-    detailed forensic trail. Detection only; it blocks nothing, so it does
-    not interfere with the intended attack. Returns [] if the file can't be
-    read as a zip (the real validation later will report that properly).
-    Resets the stream position afterwards so later extraction still works."""
-    try:
-        pos = file_storage.stream.tell()
-    except (OSError, AttributeError):
-        pos = 0
-    manifest = []
-    try:
-        with zipfile.ZipFile(file_storage.stream) as zf:
-            for info in zf.infolist():
-                if not info.is_dir():
-                    manifest.append((info.filename, info.file_size))
-    except (zipfile.BadZipFile, OSError):
-        manifest = []
-    finally:
-        try:
-            file_storage.stream.seek(pos)
-        except (OSError, AttributeError):
-            pass
-    return manifest
 
 
 def import_third_party_plugin(name, file_storage):

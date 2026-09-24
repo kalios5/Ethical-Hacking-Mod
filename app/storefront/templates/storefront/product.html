@@ -10,7 +10,7 @@
             <p class="lede">{{ product.description }}</p>
             <p class="price">${{ "%.2f"|format(product.price) }}</p>
             {% if product.stock %}
-                <form class="buy-form" method="post" action="{{ url_for('storefront.add_to_cart', product_id=product.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <form class="buy-form" method="post" action="{{ url_for('storefront.add_to_cart', product_id=product.id) }}">
                     <label>Quantity <input type="number" name="quantity" value="1" min="1" max="{{ product.stock }}"></label>
                     <button class="button" type="submit">Add to cart</button>
                 </form>

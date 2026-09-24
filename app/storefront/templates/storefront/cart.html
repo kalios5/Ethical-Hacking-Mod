@@ -9,7 +9,7 @@
         <a class="back" href="{{ url_for('storefront.index') }}">Continue shopping →</a>
     </div>
     {% if lines %}
-        <form method="post" action="{{ url_for('storefront.update_cart') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <form method="post" action="{{ url_for('storefront.update_cart') }}">
             <div class="cart-list">
                 {% for item, product in lines %}
                     <div class="cart-line">

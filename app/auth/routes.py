@@ -11,7 +11,6 @@ from app.Database.models import User, Plugin
 from app.security_plugins.temp_lockout import is_locked_out, record_failed_attempt, seconds_remaining, reset_on_success
 from app.security_plugins.new_device_alert import is_new_ip
 from app.security_plugins import ip_rate_limit as ip_limiter
-from app.auth import twofa
 
 
 def _feature_enabled(shop_id, name):
@@ -74,20 +73,6 @@ def login():
         # LOGIN_FAILED to the audit log and keeps failed_logins current.
         user = authenticate(username, password, ip=ip)
         if user:
-            # If 2FA is on for this account, DON'T complete login yet -
-            # stash a pending marker and divert to the code-entry page.
-            # The session stays unauthenticated (no user_id) until verified.
-            if user.twofa_enabled and user.twofa_secret:
-                session.clear()
-                session["pending_2fa_user_id"] = user.id
-                session["pending_2fa_ip"] = ip
-                session["pending_2fa_check_time"] = check_time.isoformat()
-                reset_on_success(user)
-                audit(actions.TWOFA_CHALLENGE, actor=user, ip=ip, shop_id=user.shop_id,
-                      target_type="user", target_id=user.id, success=True,
-                      detail="password ok, awaiting 2FA")
-                return redirect(url_for("auth.two_factor"))
-
             # session.clear() must run BEFORE any flash() calls for this
             # login - flash() stores messages inside the session, and
             # clear() wipes anything flashed before it runs.
@@ -117,46 +102,6 @@ def logout():
     session.clear()
     flash("You have been signed out.", "success")
     return redirect(url_for("storefront.index"))
-
-
-@bp.route("/2fa", methods=["GET", "POST"])
-def two_factor():
-    # Second step of a 2FA login. Reachable only when login() verified the
-    # password and stashed pending_2fa_user_id - session NOT yet authed.
-    pending_id = session.get("pending_2fa_user_id")
-    if not pending_id:
-        return redirect(url_for("auth.login"))
-
-    user = User.query.get(pending_id)
-    if user is None or not user.twofa_enabled:
-        session.clear()
-        return redirect(url_for("auth.login"))
-
-    if request.method == "POST":
-        code = request.form.get("code", "")
-        if twofa.verify_code(user, code):
-            ip = session.get("pending_2fa_ip")
-            check_time_raw = session.get("pending_2fa_check_time")
-            session.clear()
-            session["user_id"] = user.id
-            audit(actions.TWOFA_SUCCESS, actor=user, ip=ip, shop_id=user.shop_id,
-                  target_type="user", target_id=user.id, success=True, detail="2FA verified, login complete")
-            new_device_enabled = _feature_enabled(user.shop_id, "new_device_alert")
-            if new_device_enabled and check_time_raw:
-                try:
-                    if is_new_ip(user, ip, datetime.fromisoformat(check_time_raw)):
-                        flash("New sign-in detected from an unrecognized location.", "notice")
-                except ValueError:
-                    pass
-            flash(f"Welcome back, {user.username}.", "success")
-            return redirect(url_for("storefront.index"))
-
-        audit(actions.ACCESS_DENIED, actor=user, ip=session.get("pending_2fa_ip"),
-              shop_id=user.shop_id, target_type="user", target_id=user.id,
-              success=False, detail="bad 2FA code")
-        flash("Invalid authentication code.", "error")
-
-    return render_template("auth/two_factor.html")
 
 
 @bp.route("/register", methods=["GET", "POST"])
@@ -198,44 +143,3 @@ def account():
             db.session.commit()
             flash("Account updated.", "success")
     return render_template("auth/account.html", user=user)
-
-@bp.route("/2fa/setup", methods=["GET", "POST"])
-@login_required
-def two_factor_setup():
-    # Enrollment. GET generates a not-yet-activated secret + shows the QR.
-    # POST confirms the user can produce a valid code, and only THEN flips
-    # twofa_enabled on - so a mis-scanned QR can't lock someone out.
-    user = current_user()
-    if user.twofa_enabled:
-        flash("Two-factor authentication is already enabled.", "notice")
-        return redirect(url_for("auth.account"))
-
-    if request.method == "POST":
-        code = request.form.get("code", "")
-        if twofa.verify_code(user, code):
-            user.twofa_enabled = True
-            db.session.commit()
-            audit(actions.TWOFA_SUCCESS, actor=user, shop_id=user.shop_id,
-                  target_type="user", target_id=user.id, success=True, detail="2FA enabled")
-            flash("Two-factor authentication is now enabled.", "success")
-            return redirect(url_for("auth.account"))
-        flash("That code didn't match - try again.", "error")
-    else:
-        user.twofa_secret = twofa.generate_secret()
-        db.session.commit()
-
-    return render_template("auth/two_factor_setup.html",
-                           qr=twofa.qr_data_uri(user), secret=user.twofa_secret)
-
-
-@bp.route("/2fa/disable", methods=["POST"])
-@login_required
-def two_factor_disable():
-    user = current_user()
-    user.twofa_enabled = False
-    user.twofa_secret = None
-    db.session.commit()
-    audit(actions.TWOFA_SUCCESS, actor=user, shop_id=user.shop_id,
-          target_type="user", target_id=user.id, success=True, detail="2FA disabled")
-    flash("Two-factor authentication has been disabled.", "success")
-    return redirect(url_for("auth.account"))

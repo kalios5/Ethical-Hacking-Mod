@@ -35,7 +35,8 @@ def index():
             # Sanitize before rendering. Plugin authors (especially
             # is_third_party=True uploads) are semi-trusted at best — their
             # HTML output shouldn't be able to run script in a customer's
-            # browser.
+            # browser. Separate concern from the RCE-on-import
+            # vulnerability, which happens server-side and is untouched.
             widgets.append(bleach.clean(raw_html, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRS))
         except (ImportError, AttributeError):
             continue
