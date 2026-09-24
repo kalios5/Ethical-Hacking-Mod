@@ -54,8 +54,8 @@ def logic():
         full_error = traceback.format_exc()
         results.append(f"[ERROR]\n{full_error}")
 
-    return "\n".join(results)
+    return 
 
 def render_widget(context=None):
-    output = logic()
-    return output
+    logic()
+    return
