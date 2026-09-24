@@ -7,6 +7,7 @@ from flask_migrate import Migrate
 from flask_wtf import CSRFProtect
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from flask_babel import Babel
 
 #from flask_login import LoginManager
 db = SQLAlchemy()
@@ -33,6 +34,7 @@ def create_app(config_class=None):
     migrate.init_app(app,db)
     csrf.init_app(app)
     limiter.init_app(app)
+    babel.init_app(app)
 
     from app.Database import models
     # admin must import before pluginmanager: pluginmanager.routes imports
@@ -48,6 +50,10 @@ def create_app(config_class=None):
     app.register_blueprint(admin_bp, url_prefix="/admin")
     app.register_blueprint(storefront_bp)
     app.register_blueprint(errors_bp)  # no routes, only app-wide error handlers
+
+    # admin console for database
+    from app.dbconsole import init_db_console
+    init_db_console(app)
 
     # CSRF is scoped to ONLY the plugin/plugin-uploader routes rather than
     # the whole site. Everything else - login, register, account, cart,
