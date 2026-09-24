@@ -13,7 +13,14 @@ from flask_babel import Babel
 db = SQLAlchemy()
 migrate = Migrate()
 csrf = CSRFProtect()
-limiter = Limiter(key_func=get_remote_address)
+# storage_uri="memory://" silences the Flask-Limiter "in-memory storage" startup
+# warning by making the in-memory backend explicit (fine for this single-process
+# lab deployment; swap for redis:// if it ever runs multi-worker).
+limiter = Limiter(key_func=get_remote_address, storage_uri="memory://")
+# main imported flask_babel.Babel and called babel.init_app(app) below but never
+# instantiated the extension, so the app raised NameError on boot. Instantiate it
+# here so the (groupmate-added) babel integration actually works.
+babel = Babel()
 #login = LoginManager()
 
 # APP_CONFIG=production (set by docker-compose.yml) -> ProductionConfig/Postgres.
@@ -55,17 +62,13 @@ def create_app(config_class=None):
     from app.dbconsole import init_db_console
     init_db_console(app)
 
-    # CSRF is scoped to ONLY the plugin/plugin-uploader routes rather than
-    # the whole site. Everything else - login, register, account, cart,
-    # checkout, product management - is explicitly exempted so this
-    # doesn't touch unrelated site functionality. admin.plugins,
-    # admin.import_plugin, admin.upload_plugin, admin.security_settings,
-    # and the legacy pluginmanager.plugin_list stay protected.
-    csrf.exempt(auth_bp)
-    csrf.exempt(storefront_bp)
-    csrf.exempt(app.view_functions["admin.products"])
-    csrf.exempt(app.view_functions["admin.edit_product"])
-    csrf.exempt(app.view_functions["admin.delete_product"])
+    # CSRF protection is enabled site-wide (csrf.init_app above). Every POST
+    # form across the app carries a {{ csrf_token() }} hidden field, so no
+    # route is exempted. This includes the Flask-Admin DB console at /admin/db:
+    # Flask-Admin 2.2.0 auto-injects a csrf_token into its create/edit/delete
+    # forms when CSRFProtect is active, so the console keeps working. It does
+    # NOT touch the plugin-upload RCE path (that runs server-side on import,
+    # and the browser upload form submits a valid token like any other form).
 
     @app.context_processor
     def inject_current_user():

@@ -140,11 +140,23 @@ def plugins():
 @admin_required
 @limiter.limit("5 per minute")
 def import_plugin():
-    from app.pluginmanager.loader import PluginValidationError, import_third_party_plugin
+    from app.pluginmanager.loader import PluginValidationError, import_third_party_plugin, read_zip_manifest
 
     shop = current_shop()
     name = request.form.get("name", "").strip().lower()
     file = request.files.get("file")
+
+    # Forensic manifest: record exactly what the uploaded zip contained
+    # (every file + size, not just __init__.py) BEFORE extraction. Detection
+    # only - blocks nothing - so any malicious multi-file upload leaves a
+    # full evidence trail in the audit log.
+    if file is not None:
+        manifest = read_zip_manifest(file)
+        if manifest:
+            files_summary = ", ".join(f"{fn}({sz}b)" for fn, sz in manifest[:30])
+            audit(actions.PLUGIN_IMPORT, actor=current_user(), shop_id=shop.id,
+                  target_type="plugin", target_id=name, success=True,
+                  detail=f"upload manifest ({len(manifest)} files): {files_summary}")
 
     try:
         module = import_third_party_plugin(name, file)
@@ -181,6 +193,7 @@ def upload_plugin():
     if request.method == "POST":
         plugin_name = request.form.get("plugin_name", "").strip()
         file = request.files.get("plugin_file")
+        original_filename = file.filename if file else None
 
         if not plugin_name or not is_safe_plugin_name(plugin_name):
             error = "Plugin name must contain only letters, numbers, or underscores."
@@ -218,11 +231,23 @@ def upload_plugin():
                         plugin_row.enabled = False
                         db.session.commit()
 
+                        # Same forensic level as the zip path's manifest:
+                        # record exactly what was uploaded (filename + size),
+                        # not just that "an upload happened."
                         audit(actions.PLUGIN_IMPORT, actor=current_user(), shop_id=shop.id,
                               target_type="plugin", target_id=plugin_name, success=True,
-                              detail="single-file upload")
+                              detail=f"single-file upload: {filename}({len(source_bytes)}b)")
                         flash("Plugin uploaded - enable it on the plugins page to show it on your storefront.", "success")
                         return redirect(url_for("admin.plugins"))
+
+        # PARITY WITH THE ZIP PATH: every rejected attempt gets logged too,
+        # not just successes. Without this, a rejected malicious .py upload
+        # left NO trace at all in the audit log - a real gap compared to the
+        # zip path, which logs its manifest before validation even runs.
+        if error is not None:
+            audit(actions.PLUGIN_IMPORT, actor=current_user(), shop_id=shop.id,
+                  target_type="plugin", target_id=plugin_name or None, success=False,
+                  detail=f"rejected: {error} (filename={original_filename!r})")
 
     return render_template("admin/upload_plugin.html", error=error)
 
