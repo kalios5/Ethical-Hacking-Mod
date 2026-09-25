@@ -1,9 +1,9 @@
 """
-security_plugins/temp_lockout/  -  temporary account lockout with
+pluginmanager/security_plugins/temp_lockout/  -  temporary account lockout with
 exponential backoff, plus admin visibility into active lockouts.
 
-Lives under app/, as a sibling to app/plugins/ - NOT inside app/plugins/,
-which is where the
+Lives under app/pluginmanager/security_plugins/, as a sibling to
+app/pluginmanager/plugins/ - NOT inside plugins/, which is where the
 upload feature writes and where the plugin loader blindly imports whatever
 it finds. Only ever reached via a static import from app/auth/routes.py's
 login() (and app/admin/routes.py's security_settings(), for visibility)

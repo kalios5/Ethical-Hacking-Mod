@@ -1,8 +1,8 @@
 """
 app/pluginmanager/loader.py  -  plugin discovery + third-party plugin import.
 
-Plugins are just Python packages under app/plugins/<name>/ (see
-app/plugins/_template_plugin for the required interface). import_third_party_plugin()
+Plugins are just Python packages under app/pluginmanager/plugins/<name>/ (see
+app/pluginmanager/plugins/_template_plugin for the required interface). import_third_party_plugin()
 lets an admin upload a .zip of one of those folders at runtime - this is the
 project's "malicious plugin upload" lab scenario (see app/logging/db_audit.py's
 PLUGIN_IMPORT action and Plugin.is_third_party's column comment). "Checking a
@@ -22,7 +22,7 @@ import sys
 import tempfile
 import zipfile
 
-from app import plugins  # the top-level plugins package
+from app.pluginmanager import plugins  # the uploadable-plugins package
 
 PLUGINS_DIR = plugins.__path__[0]
 
@@ -48,13 +48,13 @@ def discover_plugins():
     found = []
     for _finder, name, ispkg in pkgutil.iter_modules(plugins.__path__):
         if ispkg and not name.startswith("_"):
-            module = importlib.import_module(f"app.plugins.{name}")
+            module = importlib.import_module(f"app.pluginmanager.plugins.{name}")
             found.append((name, module))
     return found
 
 
 def get_plugin(name):
-    return importlib.import_module(f"app.plugins.{name}")
+    return importlib.import_module(f"app.pluginmanager.plugins.{name}")
 
 
 def _validate_name(name):
@@ -179,10 +179,10 @@ def _validate_plugin_module(module):
 
 
 def _purge_module_cache(name):
-    """Drop app.plugins.<name> and any of its submodules from sys.modules so
+    """Drop app.pluginmanager.plugins.<name> and any of its submodules from sys.modules so
     a re-upload of the same name is actually re-imported from disk, instead
     of returning Python's cached (stale) module object."""
-    prefix = f"app.plugins.{name}"
+    prefix = f"app.pluginmanager.plugins.{name}"
     for key in [k for k in sys.modules if k == prefix or k.startswith(prefix + ".")]:
         del sys.modules[key]
 
@@ -217,11 +217,11 @@ def read_zip_manifest(file_storage):
 
 
 def import_third_party_plugin(name, file_storage):
-    """Validates and installs an uploaded plugin zip as app/plugins/<name>/.
+    """Validates and installs an uploaded plugin zip as app/pluginmanager/plugins/<name>/.
 
     Returns the freshly-imported, validated module on success. Raises
     PluginValidationError (with a human-readable reason) on any failure,
-    leaving app/plugins/ exactly as it was before the call.
+    leaving app/pluginmanager/plugins/ exactly as it was before the call.
     """
     if file_storage is None or not file_storage.filename:
         raise PluginValidationError("No file was uploaded.")
@@ -246,7 +246,7 @@ def import_third_party_plugin(name, file_storage):
             shutil.copytree(plugin_root, target_dir)
 
             _purge_module_cache(name)
-            module = importlib.import_module(f"app.plugins.{name}")
+            module = importlib.import_module(f"app.pluginmanager.plugins.{name}")
             _validate_plugin_module(module)
         except PluginValidationError:
             shutil.rmtree(target_dir, ignore_errors=True)

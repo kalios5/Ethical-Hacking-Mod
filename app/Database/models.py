@@ -1,14 +1,6 @@
 from app import db
 from datetime import datetime
 
-class PluginToggle(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), unique=True, nullable=False)
-    enabled = db.Column(db.Boolean, default=False)
-
-    def __repr__(self):
-        return f"<PluginToggle {self.name} enabled={self.enabled}>"
-
 class Shop(db.Model):
     __tablename__ = "shops"
     id = db.Column(db.Integer, primary_key=True)
@@ -40,6 +32,7 @@ class User(db.Model):
     is_active = db.Column(db.Boolean, nullable=False, default=True)
     twofa_enabled = db.Column(db.Boolean, nullable=False, default=False)
     twofa_secret = db.Column(db.String(64))
+    avatar_filename = db.Column(db.String(255))
     failed_logins = db.Column(db.Integer, nullable=False, default=0)
     last_login = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -47,6 +40,11 @@ class User(db.Model):
     __table_args__ = (
         db.UniqueConstraint("shop_id", "username", name="uq_user_per_shop"),
     )
+
+    @property
+    def avatar_url(self):
+        from flask import url_for
+        return url_for("auth.avatar", filename=self.avatar_filename) if self.avatar_filename else None
 
     # --- convenience helpers (hashing lives in db/security.py) --------------
     def set_password(self, plaintext, mode=None):

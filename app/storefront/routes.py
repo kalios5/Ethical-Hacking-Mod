@@ -1,6 +1,6 @@
 import bleach
 
-from flask import abort, flash, redirect, render_template, request, url_for
+from flask import flash, redirect, render_template, request, url_for
 from sqlalchemy import or_
 
 from app import db

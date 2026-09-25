@@ -11,14 +11,12 @@ from app.admin.validators import validate_plugin_format
 from app.auth.routes import current_user, login_required
 from app.Database.models import Order, Plugin, Product, Shop, User
 from app.logging.db_audit import actions, audit
+from app.pluginmanager.loader import (
+    BUILTIN_PLUGIN_NAMES, PLUGINS_DIR, PluginValidationError, discover_plugins, import_third_party_plugin, read_zip_manifest,
+)
 from app import limiter
-# NOT imported at module level: app.pluginmanager.routes imports
-# admin_required from this module, so importing app.pluginmanager here too
-# (even indirectly, via app.pluginmanager.loader triggering
-# app/pluginmanager/__init__.py) would be a circular import before
-# admin_required is defined below. Imported lazily inside plugins() instead.
 
-PLUGIN_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "plugins")
+PLUGIN_DIR = PLUGINS_DIR
 ALLOWED_EXTENSIONS = {".py"}
 MAX_UPLOAD_SIZE = 100 * 1024
 
@@ -105,8 +103,6 @@ def delete_product(product_id):
 @bp.route("/plugins", methods=["GET", "POST"])
 @admin_required
 def plugins():
-    from app.pluginmanager.loader import BUILTIN_PLUGIN_NAMES, discover_plugins
-
     shop = current_shop()
     if request.method == "POST":
         selected = set(request.form.getlist("active_plugins"))
@@ -140,8 +136,6 @@ def plugins():
 @admin_required
 @limiter.limit("5 per minute")
 def import_plugin():
-    from app.pluginmanager.loader import PluginValidationError, import_third_party_plugin, read_zip_manifest
-
     shop = current_shop()
     name = request.form.get("name", "").strip().lower()
     file = request.files.get("file")
@@ -185,8 +179,6 @@ def import_plugin():
 @admin_required
 @limiter.limit("5 per minute")
 def upload_plugin():
-    from app.pluginmanager.loader import BUILTIN_PLUGIN_NAMES
-
     error = None
     shop = current_shop()
 
@@ -260,14 +252,14 @@ SECURITY_PLUGIN_NAMES = ["temp_lockout", "new_device_alert", "ip_rate_limit"]
 @limiter.limit("10 per minute")
 def security_settings():
     # separate from /admin/plugins. That route toggles UNTRUSTED,
-    # uploadable plugins (app/plugins/, discovered dynamically). This
+    # uploadable plugins (app/pluginmanager/plugins/, discovered dynamically). This
     # toggles TRUSTED, statically-imported security features.
     import importlib
 
     shop = current_shop()
     toggles = []
     for name in SECURITY_PLUGIN_NAMES:
-        module = importlib.import_module(f"app.security_plugins.{name}")
+        module = importlib.import_module(f"app.pluginmanager.security_plugins.{name}")
         row = Plugin.query.filter_by(shop_id=shop.id, name=name).first()
         if not row:
             row = Plugin(shop_id=shop.id, name=name, enabled=True, is_third_party=False)
@@ -293,10 +285,10 @@ def security_settings():
 
     # Admin visibility into currently active temp_lockout cooldowns —
     # reads directly from the in-memory tracker, no separate storage.
-    from app.security_plugins.temp_lockout import current_lockouts
+    from app.pluginmanager.security_plugins.temp_lockout import current_lockouts
     locked_accounts = []
     for entry in current_lockouts():
-        locked_user = User.query.get(entry["user_id"])
+        locked_user = db.session.get(User, entry["user_id"])
         if locked_user:
             locked_accounts.append({
                 "username": locked_user.username,

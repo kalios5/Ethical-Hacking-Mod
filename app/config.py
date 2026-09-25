@@ -15,6 +15,12 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 # has already been read.
 MAX_CONTENT_LENGTH = 5 * 1024 * 1024  # 5 MB
 
+# Profile pictures live outside app/static so they are only reachable through
+# the auth.avatar route. AVATAR_MAX_BYTES is the tighter per-image cap.
+UPLOADED_AVATARS_DEST = os.environ.get("AVATAR_DIR") or os.path.join(os.path.dirname(basedir), "uploads", "avatars")
+AVATAR_MAX_BYTES = 2 * 1024 * 1024
+AVATAR_SIZE = 256
+
 
 class TestPostgresConfig:
     DEBUG = True
@@ -22,6 +28,9 @@ class TestPostgresConfig:
     SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'app.db')
     TESTING = True
     MAX_CONTENT_LENGTH = MAX_CONTENT_LENGTH
+    UPLOADED_AVATARS_DEST = UPLOADED_AVATARS_DEST
+    AVATAR_MAX_BYTES = AVATAR_MAX_BYTES
+    AVATAR_SIZE = AVATAR_SIZE
 
 
 class ProductionConfig:
@@ -34,3 +43,6 @@ class ProductionConfig:
     SQLALCHEMY_DATABASE_URI = f"postgresql://{DB_USERNAME}:{DB_PASSWORD}@db:5432/{DB_NAME}"
     POSTS_PER_PAGE = 12
     MAX_CONTENT_LENGTH = MAX_CONTENT_LENGTH
+    UPLOADED_AVATARS_DEST = UPLOADED_AVATARS_DEST
+    AVATAR_MAX_BYTES = AVATAR_MAX_BYTES
+    AVATAR_SIZE = AVATAR_SIZE

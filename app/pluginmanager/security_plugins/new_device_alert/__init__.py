@@ -1,5 +1,5 @@
 """
-security_plugins/new_device_alert/  -  flags a login from an unrecognized IP.
+pluginmanager/security_plugins/new_device_alert/  -  flags a login from an unrecognized IP.
 
 Read-only: queries the audit_log table (LOGIN_SUCCESS rows carry actor_ip)
 to check whether this user has ever logged in from this IP before. Static

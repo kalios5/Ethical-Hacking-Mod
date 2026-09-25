@@ -10,3 +10,6 @@ app/app.db
 
 # Rotated app logs (see app/logging/app_logging.py).
 logs/
+
+# User-uploaded profile pictures.
+uploads/

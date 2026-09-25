@@ -1,5 +1,5 @@
 from flask import Blueprint
 
-bp = Blueprint("storefront", __name__, template_folder="templates")
+bp = Blueprint("storefront", __name__)
 
 from app.storefront import routes

@@ -1,5 +1,5 @@
 """
-security_plugins/ip_rate_limit/  -  per-IP login throttling.
+pluginmanager/security_plugins/ip_rate_limit/  -  per-IP login throttling.
 
 Different axis from temp_lockout: that plugin locks one ACCOUNT after
 repeated failures against it. This blocks an IP ADDRESS after repeated

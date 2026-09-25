@@ -16,7 +16,7 @@ Call it from the app members' routes at the key points in the attack chain, e.g.
     audit(actions.LOGIN_SUCCESS, actor=user, ip=request.remote_addr)
     audit(actions.LOGIN_FAILED, ip=request.remote_addr, success=False,
           detail=f"username={attempted}")
-    audit(actions.ADMIN_CONSOLE_VIEW, actor=current_user, ip=request.remote_addr)
+    audit(actions.DB_CONSOLE_ACCESS, actor=current_user, ip=request.remote_addr)
     audit(actions.PLUGIN_IMPORT, actor=current_user, target_type="plugin",
           target_id=name, detail="third-party upload")
 """
@@ -29,16 +29,14 @@ class actions:
     """Canonical action names - use these so logs are consistent & grep-able."""
     LOGIN_SUCCESS = "LOGIN_SUCCESS"
     LOGIN_FAILED = "LOGIN_FAILED"
-    LOGOUT = "LOGOUT"
     TWOFA_CHALLENGE = "TWOFA_CHALLENGE"
     TWOFA_SUCCESS = "TWOFA_SUCCESS"
     USER_CREATED = "USER_CREATED"
-    PASSWORD_CHANGED = "PASSWORD_CHANGED"
-    ROLE_CHANGED = "ROLE_CHANGED"
-    ADMIN_CONSOLE_VIEW = "ADMIN_CONSOLE_VIEW"     # IDOR target
     DB_CONSOLE_ACCESS = "DB_CONSOLE_ACCESS"
     PLUGIN_TOGGLE = "PLUGIN_TOGGLE"
     PLUGIN_IMPORT = "PLUGIN_IMPORT"               # malicious plugin upload
+    PROFILE_UPDATED = "PROFILE_UPDATED"
+    DB_EXPORT = "DB_EXPORT"
     ORDER_PLACED = "ORDER_PLACED"
     ACCESS_DENIED = "ACCESS_DENIED"
 

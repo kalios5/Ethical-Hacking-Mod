@@ -1,17 +1,19 @@
+import re
 from functools import wraps
 
 from datetime import datetime
-from flask import flash, redirect, render_template, request, session, url_for
+from flask import abort, current_app, flash, redirect, render_template, request, send_from_directory, session, url_for
 
 from app import db
 from app.auth import bp
 from app.Database.auth import authenticate
 from app.logging.db_audit import actions, audit
 from app.Database.models import User, Plugin
-from app.security_plugins.temp_lockout import is_locked_out, record_failed_attempt, seconds_remaining, reset_on_success
-from app.security_plugins.new_device_alert import is_new_ip
-from app.security_plugins import ip_rate_limit as ip_limiter
+from app.pluginmanager.security_plugins.temp_lockout import is_locked_out, record_failed_attempt, seconds_remaining, reset_on_success
+from app.pluginmanager.security_plugins.new_device_alert import is_new_ip
+from app.pluginmanager.security_plugins import ip_rate_limit as ip_limiter
 from app.auth import twofa
+from app.uploads import delete_avatar, save_avatar
 
 
 def _feature_enabled(shop_id, name):
@@ -56,7 +58,7 @@ def login():
         existing_user = User.query.filter_by(username=username).first()
 
         # Prototype security plugin, statically imported (see
-        # security_plugins/temp_lockout/__init__.py). Only enforced when
+        # pluginmanager/security_plugins/temp_lockout/__init__.py). Only enforced when
         # this shop has it enabled via /admin/security-settings.
         lockout_enabled = _feature_enabled(existing_user.shop_id, "temp_lockout") if existing_user else True
         if existing_user and lockout_enabled and is_locked_out(existing_user):
@@ -127,7 +129,7 @@ def two_factor():
     if not pending_id:
         return redirect(url_for("auth.login"))
 
-    user = User.query.get(pending_id)
+    user = db.session.get(User, pending_id)
     if user is None or not user.twofa_enabled:
         session.clear()
         return redirect(url_for("auth.login"))
@@ -186,18 +188,51 @@ def account():
     if request.method == "POST":
         email = request.form.get("email", "").strip()
         password = request.form.get("password", "")
+        avatar = request.files.get("avatar")
         if not email:
             flash("Email cannot be empty.", "error")
         else:
+            if password and len(password) < 8:
+                flash("A new password must have at least 8 characters.", "error")
+                return render_template("auth/account.html", user=user)
+            if avatar and avatar.filename:
+                error = save_avatar(user, avatar)
+                if error:
+                    db.session.rollback()
+                    flash(error, "error")
+                    return render_template("auth/account.html", user=user)
             user.email = email
             if password:
-                if len(password) < 8:
-                    flash("A new password must have at least 8 characters.", "error")
-                    return render_template("auth/account.html", user=user)
                 user.set_password(password, "secure")
             db.session.commit()
+            audit(actions.PROFILE_UPDATED, actor=user, shop_id=user.shop_id,
+                  target_type="user", target_id=user.id, success=True,
+                  detail="avatar changed" if avatar and avatar.filename else "profile updated")
             flash("Account updated.", "success")
     return render_template("auth/account.html", user=user)
+
+
+@bp.route("/account/avatar/remove", methods=["POST"])
+@login_required
+def remove_avatar():
+    user = current_user()
+    delete_avatar(user)
+    db.session.commit()
+    audit(actions.PROFILE_UPDATED, actor=user, shop_id=user.shop_id,
+          target_type="user", target_id=user.id, success=True, detail="avatar removed")
+    flash("Profile picture removed.", "success")
+    return redirect(url_for("auth.account"))
+
+
+@bp.route("/avatar/<filename>")
+def avatar(filename):
+    # Only names we generated ({uuid hex}.png) are ever served.
+    if not re.fullmatch(r"[0-9a-f]{32}\.png", filename):
+        abort(404)
+    response = send_from_directory(current_app.config["UPLOADED_AVATARS_DEST"], filename)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    return response
+
 
 @bp.route("/2fa/setup", methods=["GET", "POST"])
 @login_required

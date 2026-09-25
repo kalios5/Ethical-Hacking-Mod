@@ -45,6 +45,7 @@ services:
     volumes:
       - ./.env:/.env
       - ./logs:/logs
+      - ./uploads:/uploads
     networks:
       - application
     depends_on:

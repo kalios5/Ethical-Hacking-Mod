@@ -1,3 +1,1 @@
-from flask import Blueprint
-bp = Blueprint('pluginmanager',__name__, template_folder="templates")
-from app.pluginmanager import routes
+"""Plugin discovery/import helpers (see loader.py). No routes: plugins are managed from app/admin."""

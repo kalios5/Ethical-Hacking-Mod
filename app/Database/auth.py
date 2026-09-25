@@ -1,33 +1,10 @@
 """
-db/auth.py  -  DB-backed authentication + login audit logging.
+Database/auth.py  -  DB-backed authentication + login audit logging.
 
-WHY THIS EXISTS
----------------
-pluginmanager/routes.py currently authenticates like this:
-
-    if username == "admin" and password == "admin123":
-        session["logged_in"] = True
-
-That hardcoded check means there is nothing in the database for an attacker to
-dump, and nothing gets logged. This module replaces it with a real lookup
-against the `users` table, and records every attempt (success AND failure) to
-both logs/app.log and the audit_log table - which is the point of the
-DB-container deliverable.
-
-HOW THE APP MEMBER USES IT
---------------------------
-In pluginmanager/routes.py, replace the hardcoded branch with:
-
-    from db.auth import authenticate
-
-    user = authenticate(username, password, ip=request.remote_addr)
-    if user:
-        session["logged_in"] = True
-        session["username"] = user.username
-        session["user_id"]  = user.id          # <- enables the IDOR path
-        session["role"]     = user.role
-        return redirect(url_for("pluginmanager.admin_dashboard"))
-    return render_template("login.html", error="Invalid username or password")
+authenticate() looks the user up in the `users` table, verifies the password
+with Database/security.py, keeps failed_logins/last_login current, and logs
+LOGIN_SUCCESS / LOGIN_FAILED to logs/app.log and the audit_log table. It is
+called from auth/routes.py::login().
 
 Seeded logins (see app/__init__.py::_seed_development_data()):
     superadmin / SuperSecret@2026   (role: superadmin)

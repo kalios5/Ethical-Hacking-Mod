@@ -1,7 +1,7 @@
 import os
 
 from flask import Flask
-from app.config import *
+from app.config import ProductionConfig, TestPostgresConfig
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_wtf import CSRFProtect
@@ -42,24 +42,22 @@ def create_app(config_class=None):
     csrf.init_app(app)
     limiter.init_app(app)
     babel.init_app(app)
+    from app.uploads import init_uploads
+    init_uploads(app)
 
-    from app.Database import models
-    # admin must import before pluginmanager: pluginmanager.routes imports
-    # admin_required from app.admin.routes.
+    from app.Database import models  # noqa: F401  (registers models with SQLAlchemy)
     from app.admin import bp as admin_bp
-    from app.pluginmanager import bp as pluginmanager_bp
     from app.auth import bp as auth_bp
     from app.storefront import bp as storefront_bp
     from app.errors import bp as errors_bp
 
-    app.register_blueprint(pluginmanager_bp, url_prefix="/pluginmanager")
     app.register_blueprint(auth_bp, url_prefix="/auth")
     app.register_blueprint(admin_bp, url_prefix="/admin")
     app.register_blueprint(storefront_bp)
     app.register_blueprint(errors_bp)  # no routes, only app-wide error handlers
 
     # admin console for database
-    from app.dbconsole import init_db_console
+    from app.admin.dbconsole import init_db_console
     init_db_console(app)
 
     # CSRF protection is enabled site-wide (csrf.init_app above). Every POST
@@ -78,11 +76,22 @@ def create_app(config_class=None):
     if not os.environ.get("SKIP_AUTO_INIT"):  # TEMP: unset for `flask db migrate`
         with app.app_context():
             db.create_all()
+            _add_missing_columns()
             _seed_development_data()
             from app.Database.audit_events import prune_old_audit_rows
             prune_old_audit_rows(days=7)
 
     return app
+
+
+def _add_missing_columns():
+    """db.create_all() never alters an existing table, and migrations/versions
+    is empty, so columns added after first deploy are added here (idempotent)."""
+    from sqlalchemy import inspect, text
+
+    if "avatar_filename" not in {c["name"] for c in inspect(db.engine).get_columns("users")}:
+        with db.engine.begin() as conn:
+            conn.execute(text("ALTER TABLE users ADD COLUMN avatar_filename VARCHAR(255)"))
 
 
 def _seed_development_data():

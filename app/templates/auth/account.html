@@ -4,7 +4,13 @@
     <section class="form-page">
         <p class="eyebrow">Account settings</p>
         <h1>{{ user.username }}</h1>
-        <form class="form-card" method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <form class="form-card" method="post" enctype="multipart/form-data"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="avatar-row">
+                {% if user.avatar_url %}<img class="avatar large" src="{{ user.avatar_url }}" alt="Your profile picture">{% else %}<span class="avatar large placeholder">{{ user.username[:1]|upper }}</span>{% endif %}
+                <label>Profile picture <span class="muted">(JPG, PNG or WEBP, max 2 MB)</span>
+                    <input type="file" name="avatar" accept="image/png,image/jpeg,image/webp">
+                </label>
+            </div>
             <label>Email
                 <input type="email" name="email" value="{{ user.email }}" required>
             </label>
@@ -13,6 +19,13 @@
             </label>
             <button class="button" type="submit">Save changes</button>
         </form>
+
+        {% if user.avatar_url %}
+        <form class="form-card" method="post" action="{{ url_for('auth.remove_avatar') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="button secondary" type="submit">Remove profile picture</button>
+        </form>
+        {% endif %}
 
         <div class="form-card">
             <h2>Two-factor authentication</h2>

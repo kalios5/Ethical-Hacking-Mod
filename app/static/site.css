@@ -646,3 +646,193 @@ footer {
     flex-direction: column
   }
 }
+
+/* ============================================================
+   Profile pictures
+   ============================================================ */
+.avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--line)
+}
+
+.avatar.large {
+  width: 84px;
+  height: 84px
+}
+
+.avatar.placeholder {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #dce8df;
+  color: var(--leaf);
+  font: 600 32px 'Playfair Display', serif
+}
+
+.avatar-row {
+  display: flex;
+  align-items: center;
+  gap: 20px
+}
+
+.account-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px
+}
+
+/* ============================================================
+   DB console (Flask-Admin pages, wrapped in .dbconsole)
+   Bootstrap 4 is loaded for the model views' widgets; these rules
+   pull its look back onto the site's tokens.
+   ============================================================ */
+body {
+  font: 15px/1.55 'DM Sans', sans-serif;
+  color: var(--ink);
+  background: var(--paper)
+}
+
+.dbconsole a {
+  color: var(--leaf)
+}
+
+.dbconsole a:hover {
+  color: var(--coral);
+  text-decoration: none
+}
+
+.dbconsole-menu {
+  list-style: none;
+  margin: 0 0 24px;
+  padding: 0 0 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 22px;
+  border-bottom: 1px solid var(--line)
+}
+
+.dbconsole-menu li a {
+  padding: 0;
+  font-weight: 500
+}
+
+.dbconsole-menu li.active a {
+  color: var(--coral);
+  border-bottom: 2px solid var(--coral)
+}
+
+.dbconsole .table-responsive,
+.dbconsole .model-list {
+  overflow-x: auto
+}
+
+.dbconsole table {
+  background: #fff;
+  border: 1px solid var(--line);
+  color: var(--ink)
+}
+
+.dbconsole .table thead th {
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .05em
+}
+
+.dbconsole .table td,
+.dbconsole .table th {
+  border-top: 1px solid var(--line)
+}
+
+.dbconsole .btn,
+.dbconsole .btn-primary {
+  background: var(--leaf);
+  border: 1px solid var(--leaf);
+  color: #fff;
+  border-radius: 0
+}
+
+.dbconsole .btn:hover {
+  background: var(--coral);
+  border-color: var(--coral);
+  color: #fff
+}
+
+.dbconsole .btn-danger {
+  background: transparent;
+  color: #a33;
+  border-color: #a33
+}
+
+.dbconsole .btn-secondary,
+.dbconsole .btn-default,
+.dbconsole .btn-light {
+  background: transparent;
+  color: var(--leaf)
+}
+
+.dbconsole .form-control,
+.dbconsole .select2-container .select2-selection {
+  border: 1px solid var(--line);
+  border-radius: 0;
+  background: #fff;
+  color: var(--ink)
+}
+
+.dbconsole .form-control:focus {
+  border-color: var(--leaf);
+  box-shadow: none
+}
+
+.dbconsole .pagination .page-link {
+  color: var(--leaf);
+  border-color: var(--line);
+  border-radius: 0
+}
+
+.dbconsole .pagination .active .page-link {
+  background: var(--leaf);
+  border-color: var(--leaf);
+  color: #fff
+}
+
+.dbconsole .nav-tabs .nav-link.active {
+  color: var(--leaf);
+  border-color: var(--line) var(--line) #fff
+}
+
+.dbconsole .dropdown-menu {
+  border-radius: 0;
+  border-color: var(--line)
+}
+
+.dbconsole .actions-nav,
+.dbconsole .nav.actions-nav {
+  gap: 10px
+}
+
+/* The global `input` rule (width:100%, padding) would stretch checkboxes and
+   collapse the multi-select column; reset them inside the console. */
+.dbconsole input[type="checkbox"],
+.dbconsole input[type="radio"] {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  margin: 0;
+  vertical-align: middle;
+  accent-color: var(--leaf);
+  cursor: pointer
+}
+
+.dbconsole .list-checkbox-column {
+  width: 44px;
+  text-align: center
+}
+
+.dbconsole .actions-nav .dropdown-toggle {
+  cursor: pointer
+}
