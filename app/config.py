@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 
 from dotenv import load_dotenv
 
@@ -32,6 +33,15 @@ class TestPostgresConfig:
     AVATAR_MAX_BYTES = AVATAR_MAX_BYTES
     AVATAR_SIZE = AVATAR_SIZE
 
+    # --- session cookie hardening -----------------------------------------
+    SESSION_COOKIE_HTTPONLY = True          # JS can't read the cookie (XSS)
+    SESSION_COOKIE_SAMESITE = "Lax"         # cross-site POSTs don't send it (CSRF depth)
+    SESSION_COOKIE_SECURE = False           # dev runs over plain http; see prod
+    PERMANENT_SESSION_LIFETIME = timedelta(hours=12)
+    # CSP as Report-Only in dev so you can watch for violations without
+    # anything being blocked during testing. Enforced in production below.
+    CSP_REPORT_ONLY = True
+
 
 class ProductionConfig:
     DEBUG = False
@@ -46,3 +56,10 @@ class ProductionConfig:
     UPLOADED_AVATARS_DEST = UPLOADED_AVATARS_DEST
     AVATAR_MAX_BYTES = AVATAR_MAX_BYTES
     AVATAR_SIZE = AVATAR_SIZE
+
+    # --- session cookie hardening -----------------------------------------
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = "Lax"
+    SESSION_COOKIE_SECURE = True             # requires HTTPS (nginx TLS terminator)
+    PERMANENT_SESSION_LIFETIME = timedelta(hours=12)
+    CSP_REPORT_ONLY = False                  # enforce the policy in production

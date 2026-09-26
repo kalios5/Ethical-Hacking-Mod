@@ -34,8 +34,23 @@ def create_app(config_class=None):
     app = Flask(__name__)
     app.config.from_object(config_class)
 
+    # Fail closed on a missing/placeholder SECRET_KEY in a real deployment.
+    # session cookies AND CSRF tokens are signed with it, so a fallback like
+    # "TEST" in production would let anyone forge an admin session. TESTING
+    # (local/dev SQLite) is exempt so `python main.py` still runs.
+    if not app.config.get("TESTING"):
+        secret = app.config.get("SECRET_KEY")
+        if not secret or secret == "TEST":
+            raise RuntimeError(
+                "SECRET_KEY must be set to a strong, secret value in production "
+                "(set the SECRET_KEY environment variable)."
+            )
+
     from app.logging.app_logging import configure_logging
     configure_logging(app)
+
+    from app.security_headers import init_security_headers
+    init_security_headers(app)
 
     db.init_app(app)
     migrate.init_app(app,db)
