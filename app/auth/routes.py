@@ -26,6 +26,20 @@ def current_user():
     return db.session.get(User, user_id) if user_id else None
 
 
+def _is_safe_redirect_target(target):
+    """True only for a same-site absolute path like '/cart'. Rejects absolute
+    URLs ('http://evil'), protocol-relative ('//evil'), and backslash tricks
+    ('/\\evil', which browsers treat as protocol-relative) - all open-redirect
+    vectors that a bare target.startswith('/') check would let through."""
+    if not target or not target.startswith("/"):
+        return False
+    if target.startswith("//") or target.startswith("/\\"):
+        return False
+    from urllib.parse import urlparse
+    parsed = urlparse(target)
+    return not parsed.scheme and not parsed.netloc
+
+
 def login_required(view):
     @wraps(view)
     def wrapped(*args, **kwargs):
@@ -102,8 +116,10 @@ def login():
                 flash("New sign-in detected from an unrecognized location.", "notice")
 
             flash(f"Welcome back, {user.username}.", "success")
-            target = request.args.get("next") or url_for("storefront.index")
-            return redirect(target if target.startswith("/") else url_for("storefront.index"))
+            target = request.args.get("next")
+            if not _is_safe_redirect_target(target):
+                target = url_for("storefront.index")
+            return redirect(target)
 
         if ip_limit_enabled:
             ip_limiter.record_failed_attempt(ip)
@@ -114,8 +130,11 @@ def login():
     return render_template("auth/login.html")
 
 
-@bp.route("/logout")
+@bp.route("/logout", methods=["POST"])
 def logout():
+    # POST-only so a cross-site GET (e.g. <img src=".../auth/logout">) can't
+    # force-log-out a user. The nav "Log out" control is a small CSRF-token
+    # form (see base.html) rather than a link.
     session.clear()
     flash("You have been signed out.", "success")
     return redirect(url_for("storefront.index"))
