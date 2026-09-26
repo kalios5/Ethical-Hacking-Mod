@@ -12,7 +12,7 @@
     <a class="brand" href="{{ url_for('storefront.index') }}">Petal & Stem</a>
     <nav>
         <a href="{{ url_for('storefront.index') }}">Shop</a>
-        {% if current_user %}<a href="{{ url_for('storefront.cart') }}">Cart</a><a class="account-link" href="{{ url_for('auth.account') }}">{% if current_user.avatar_url %}<img class="avatar" src="{{ current_user.avatar_url }}" alt="">{% endif %}{{ current_user.username }}</a>{% if current_user.role in ['admin', 'superadmin'] %}<a href="{{ url_for('admin.dashboard') }}">Admin</a>{% endif %}<a href="{{ url_for('auth.logout') }}">Log out</a>{% else %}<a href="{{ url_for('auth.login') }}">Log in</a><a class="button small" href="{{ url_for('auth.register') }}">Create account</a>{% endif %}
+        {% if current_user %}<a href="{{ url_for('storefront.cart') }}">Cart</a><a class="account-link" href="{{ url_for('auth.account') }}">{% if current_user.avatar_url %}<img class="avatar" src="{{ current_user.avatar_url }}" alt="">{% endif %}{{ current_user.username }}</a>{% if current_user.role in ['admin', 'superadmin'] %}<a href="{{ url_for('admin.dashboard') }}">Admin</a>{% endif %}<form method="post" action="{{ url_for('auth.logout') }}" class="inline">{{ csrf_token() }}<button type="submit" class="text-button">Log out</button></form>{% else %}<a href="{{ url_for('auth.login') }}">Log in</a><a class="button small" href="{{ url_for('auth.register') }}">Create account</a>{% endif %}
     </nav>
 </header>
 <main class="page">
