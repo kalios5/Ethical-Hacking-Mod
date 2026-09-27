@@ -14,11 +14,12 @@ import logging
 import os
 import time
 from logging.handlers import TimedRotatingFileHandler
+from pathlib import Path
 
 from flask import g, request
 
-LOG_DIR = os.environ.get("LOG_DIR", "logs")
-LOG_FILE = os.path.join(LOG_DIR, "app.log")
+LOG_DIR = Path(os.environ.get("LOG_DIR", "logs"))
+LOG_FILE = LOG_DIR / "app.log"
 LOG_RETENTION_DAYS = 7
 
 LOG_FORMAT = "%(asctime)s %(levelname)-7s [%(name)s] %(message)s"
@@ -27,7 +28,7 @@ DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 def configure_logging(app):
     """Attach handlers to the Flask app logger and install request hooks."""
-    os.makedirs(LOG_DIR, exist_ok=True)
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
 
     level = logging.DEBUG if app.config.get("DEBUG") else logging.INFO
     formatter = logging.Formatter(LOG_FORMAT, datefmt=DATE_FORMAT)

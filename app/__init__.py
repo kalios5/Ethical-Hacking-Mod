@@ -1,6 +1,8 @@
 import os
 
 from flask import Flask
+from flask.templating import Environment as FlaskEnvironment
+from jinja2.sandbox import ImmutableSandboxedEnvironment, safe_range
 from app.config import ProductionConfig, TestPostgresConfig
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -8,8 +10,67 @@ from flask_wtf import CSRFProtect
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_babel import Babel
-
+from app.safe_config import SafeConfigProxy
 #from flask_login import LoginManager
+
+
+class SandboxedEnvironment(ImmutableSandboxedEnvironment, FlaskEnvironment):
+    """ImmutableSandboxedEnvironment + Flask's app-aware Environment.
+
+    Never constructed directly (see SandboxedFlask.create_jinja_environment
+    below) - it exists only so the environment Flask already built can be
+    re-classed onto something that is both. Flask's Environment.__init__
+    takes `app` and calls jinja2.Environment.__init__ directly by name
+    (not via super()), which would skip ImmutableSandboxedEnvironment's own
+    __init__ (the part that sets up self.binop_table/self.unop_table, which
+    its sandboxed operator checks rely on) if constructed the normal way -
+    hence the re-class-after-the-fact approach instead.
+
+    LAB CONFIG (kept on purpose - see Scripts/WebAttack/ployInject.py):
+    the default sandbox rule blocks every attribute starting with "_",
+    which also blocks SSTI payloads that only ever touch application
+    objects (e.g. `user.__class__.query.session` to reach the ORM and
+    create a row via `__setattr__`) - not just the os/subprocess gadgets
+    this sandbox exists to stop. _ALLOWED_UNSAFE_ATTRS narrows that back
+    open for exactly the two dunders that "stay within app functions"
+    payload needs, while everything else underscore-prefixed - in
+    particular __globals__, __subclasses__, __mro__, __bases__, __base__,
+    __init__, __builtins__ - stays blocked by the default rule below. Those
+    are the specific attributes every known os/subprocess gadget chain
+    needs to walk from an arbitrary object back to a module's globals or
+    the class hierarchy. This is a curated allowlist, not a proof: it
+    closes the gadget shape demonstrated in this lab and the well-known
+    dangerous dunders, not a formal guarantee against every possible
+    Python object-graph trick - do not treat it as equivalent to the full
+    default-deny sandbox.
+    """
+
+    _ALLOWED_UNSAFE_ATTRS = {"__class__", "__setattr__"}
+
+    def is_safe_attribute(self, obj, attr, value):
+        if attr in self._ALLOWED_UNSAFE_ATTRS:
+            return True
+        return super().is_safe_attribute(obj, attr, value)
+
+
+class SandboxedFlask(Flask):
+    def create_jinja_environment(self):
+        # Build the environment the normal Flask way first (this is what
+        # wires up the template loader/autoescape from `self`), then turn
+        # it into a sandboxed one. Every template expression is then
+        # evaluated in Jinja's sandbox: attribute access to anything
+        # starting with "_" (__class__, __globals__, __subclasses__,
+        # __builtins__ ...) is refused, so an SSTI cannot walk the object
+        # graph to os/subprocess. See app/safe_config.py for the separate
+        # secret-disclosure allowlist.
+        env = super().create_jinja_environment()
+        env.__class__ = SandboxedEnvironment
+        env.globals["range"] = safe_range
+        env.binop_table = env.default_binop_table.copy()
+        env.unop_table = env.default_unop_table.copy()
+        return env
+
+
 db = SQLAlchemy()
 migrate = Migrate()
 csrf = CSRFProtect()
@@ -31,8 +92,10 @@ CONFIG_BY_NAME = {"production": ProductionConfig, "test": TestPostgresConfig}
 def create_app(config_class=None):
     if config_class is None:
         config_class = CONFIG_BY_NAME.get(os.environ.get("APP_CONFIG", "test"), TestPostgresConfig)
-    app = Flask(__name__)
+    app = SandboxedFlask(__name__)
     app.config.from_object(config_class)
+    app.jinja_env.globals.pop('config', None)
+    app.jinja_env.globals['config'] = SafeConfigProxy(app.config)
 
     from app.logging.app_logging import configure_logging
     configure_logging(app)
@@ -49,16 +112,17 @@ def create_app(config_class=None):
     from app.admin import bp as admin_bp
     from app.auth import bp as auth_bp
     from app.storefront import bp as storefront_bp
-    from app.errors import bp as errors_bp
+    from app.errors.routes import register_error_handlers
 
     app.register_blueprint(auth_bp, url_prefix="/auth")
     app.register_blueprint(admin_bp, url_prefix="/admin")
     app.register_blueprint(storefront_bp)
-    app.register_blueprint(errors_bp)  # no routes, only app-wide error handlers
+    register_error_handlers(app)  # production only (DEBUG=False) - see that module's docstring
 
     # admin console for database
     from app.admin.dbconsole import init_db_console
     init_db_console(app)
+
 
     # CSRF protection is enabled site-wide (csrf.init_app above). Every POST
     # form across the app carries a {{ csrf_token() }} hidden field, so no

@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Your account | Petal & Stem</title>
+    <link rel="stylesheet" href="/static/site.css">
+    
+</head>
+<body>
+<header class="topbar">
+    <a class="brand" href="/">Petal & Stem</a>
+    <nav>
+        <a href="/">Shop</a>
+        <a href="/cart">Cart</a><a class="account-link" href="/auth/account"><img class="avatar" src="/auth/avatar/../../app/templates/storefront/cart.html" alt="">alice</a><a href="/auth/logout">Log out</a>
+    </nav>
+</header>
+<main class="page">
+    <div class="notices"><div class="notice success">Account updated.</div></div>
+    
+    <section class="form-page">
+        <p class="eyebrow">Account settings</p>
+        <h1>alice</h1>
+        <form class="form-card" method="post" enctype="multipart/form-data"><input type="hidden" name="csrf_token" value="Ijg2ZWJiY2M5ODEyMjMxOGUyNzk2YjdjN2I4YjNhZTIyZjBiODEwMTQi.arizJw.9oNgYOYD_lKfiISOTrJunxBVnww">
+            <div class="avatar-row">
+                <img class="avatar large" src="/auth/avatar/../../app/templates/storefront/cart.html" alt="Your profile picture">
+                <label>Profile picture <span class="muted">(JPG, PNG or WEBP, max 2 MB)</span>
+                    <input type="file" name="avatar" accept="image/png,image/jpeg,image/webp">
+                </label>
+            </div>
+            <label>Email
+                <input type="email" name="email" value="alice@example.com" required>
+            </label>
+            <label>New password <span class="muted">(leave blank to keep current)</span>
+                <input type="password" name="password" minlength="8">
+            </label>
+            <button class="button" type="submit">Save changes</button>
+        </form>
+
+        
+        <form class="form-card" method="post" action="/auth/account/avatar/remove">
+            <input type="hidden" name="csrf_token" value="Ijg2ZWJiY2M5ODEyMjMxOGUyNzk2YjdjN2I4YjNhZTIyZjBiODEwMTQi.arizJw.9oNgYOYD_lKfiISOTrJunxBVnww">
+            <button class="button secondary" type="submit">Remove profile picture</button>
+        </form>
+        
+
+        <div class="form-card">
+            <h2>Two-factor authentication</h2>
+            
+                <p class="muted">Status: <strong>Not enabled</strong>. Add a second layer of protection with an authenticator app.</p>
+                <a class="button" href="/auth/2fa/setup">Set up 2FA</a>
+            
+        </div>
+    </section>
+
+</main>
+<footer><span>Petal & Stem</span><span>Thoughtful things, beautifully sent.</span></footer>
+
+</body>
+</html>

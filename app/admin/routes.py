@@ -1,6 +1,6 @@
-import os
 import re
 from functools import wraps
+from pathlib import Path
 
 from flask import abort, flash, redirect, render_template, request, url_for
 from werkzeug.utils import secure_filename
@@ -19,6 +19,8 @@ from app import limiter
 PLUGIN_DIR = PLUGINS_DIR
 ALLOWED_EXTENSIONS = {".py"}
 MAX_UPLOAD_SIZE = 100 * 1024
+
+
 
 
 def is_safe_plugin_name(name):
@@ -195,7 +197,7 @@ def upload_plugin():
             error = "No file selected."
         else:
             filename = secure_filename(file.filename)
-            ext = os.path.splitext(filename)[1].lower()
+            ext = Path(filename).suffix.lower()
 
             if ext not in ALLOWED_EXTENSIONS:
                 error = "Only .py files are accepted."
@@ -209,9 +211,9 @@ def upload_plugin():
                     if not is_valid:
                         error = format_error
                     else:
-                        plugin_folder = os.path.join(PLUGIN_DIR, plugin_name)
-                        os.makedirs(plugin_folder, exist_ok=True)
-                        with open(os.path.join(plugin_folder, "__init__.py"), "wb") as f:
+                        plugin_folder = PLUGIN_DIR / plugin_name
+                        plugin_folder.mkdir(parents=True, exist_ok=True)
+                        with open(plugin_folder / "__init__.py", "wb") as f:
                             f.write(source_bytes)
 
                         # Mark it as third-party in the model
