@@ -9,7 +9,7 @@ from app import db
 from app.admin import bp
 from app.admin.validators import validate_plugin_format
 from app.auth.routes import current_user, login_required
-from app.Database.models import Order, Plugin, Product, Shop, User
+from app.Database.models import Order, Plugin, Product, User
 from app.logging.db_audit import actions, audit
 from app.pluginmanager.loader import (
     BUILTIN_PLUGIN_NAMES, PLUGINS_DIR, PluginValidationError, discover_plugins, import_third_party_plugin, read_zip_manifest,
@@ -36,27 +36,20 @@ def admin_required(view):
     return wrapped
 
 
-def current_shop():
-    return Shop.query.order_by(Shop.id).first()
-
-
 @bp.route("/")
 @admin_required
 def dashboard():
-    shop = current_shop()
     return render_template(
         "admin/dashboard.html",
-        shop=shop,
-        product_count=Product.query.filter_by(shop_id=shop.id).count(),
-        order_count=Order.query.filter_by(shop_id=shop.id).count(),
-        customer_count=User.query.filter_by(shop_id=shop.id, role="customer").count(),
+        product_count=Product.query.count(),
+        order_count=Order.query.count(),
+        customer_count=User.query.filter_by(role="customer").count(),
     )
 
 
 @bp.route("/products", methods=["GET", "POST"])
 @admin_required
 def products():
-    shop = current_shop()
     if request.method == "POST":
         try:
             price_cents = round(float(request.form.get("price", "0")) * 100)
@@ -68,17 +61,17 @@ def products():
             if not name or price_cents < 0 or stock < 0:
                 flash("Provide a product name, non-negative price, and non-negative stock.", "error")
             else:
-                db.session.add(Product(shop_id=shop.id, name=name, description=request.form.get("description", "").strip(), price_cents=price_cents, stock=stock))
+                db.session.add(Product(name=name, description=request.form.get("description", "").strip(), price_cents=price_cents, stock=stock))
                 db.session.commit()
                 flash("Product created.", "success")
                 return redirect(url_for("admin.products"))
-    return render_template("admin/products.html", products=Product.query.filter_by(shop_id=shop.id).order_by(Product.created_at.desc()).all())
+    return render_template("admin/products.html", products=Product.query.order_by(Product.created_at.desc()).all())
 
 
 @bp.route("/products/<int:product_id>/edit", methods=["GET", "POST"])
 @admin_required
 def edit_product(product_id):
-    product = Product.query.filter_by(id=product_id, shop_id=current_shop().id).first_or_404()
+    product = Product.query.filter_by(id=product_id).first_or_404()
     if request.method == "POST":
         product.name = request.form.get("name", "").strip()
         product.description = request.form.get("description", "").strip()
@@ -93,7 +86,7 @@ def edit_product(product_id):
 @bp.route("/products/<int:product_id>/delete", methods=["POST"])
 @admin_required
 def delete_product(product_id):
-    product = Product.query.filter_by(id=product_id, shop_id=current_shop().id).first_or_404()
+    product = Product.query.filter_by(id=product_id).first_or_404()
     db.session.delete(product)
     db.session.commit()
     flash("Product deleted.", "success")
@@ -103,22 +96,20 @@ def delete_product(product_id):
 @bp.route("/plugins", methods=["GET", "POST"])
 @admin_required
 def plugins():
-    shop = current_shop()
     if request.method == "POST":
         selected = set(request.form.getlist("active_plugins"))
         for name, _module in discover_plugins():
-            plugin = Plugin.query.filter_by(shop_id=shop.id, name=name).first()
+            plugin = Plugin.query.filter_by(name=name).first()
             if plugin is None:
-                plugin = Plugin(shop_id=shop.id, name=name)
+                plugin = Plugin(name=name)
                 db.session.add(plugin)
             plugin.enabled = name in selected
         db.session.commit()
-        audit(actions.PLUGIN_TOGGLE, actor=current_user(), shop_id=shop.id,
-              detail=f"active_plugins={sorted(selected)}")
+        audit(actions.PLUGIN_TOGGLE, actor=current_user(), detail=f"active_plugins={sorted(selected)}")
         flash("Plugin settings updated.", "success")
         return redirect(url_for("admin.plugins"))
 
-    rows = {row.name: row for row in Plugin.query.filter_by(shop_id=shop.id).all()}
+    rows = {row.name: row for row in Plugin.query.all()}
     plugin_data = [
         {
             "name": name,
@@ -136,7 +127,6 @@ def plugins():
 @admin_required
 @limiter.limit("5 per minute")
 def import_plugin():
-    shop = current_shop()
     name = request.form.get("name", "").strip().lower()
     file = request.files.get("file")
 
@@ -148,28 +138,28 @@ def import_plugin():
         manifest = read_zip_manifest(file)
         if manifest:
             files_summary = ", ".join(f"{fn}({sz}b)" for fn, sz in manifest[:30])
-            audit(actions.PLUGIN_IMPORT, actor=current_user(), shop_id=shop.id,
+            audit(actions.PLUGIN_IMPORT, actor=current_user(),
                   target_type="plugin", target_id=name, success=True,
                   detail=f"upload manifest ({len(manifest)} files): {files_summary}")
 
     try:
         module = import_third_party_plugin(name, file)
     except PluginValidationError as exc:
-        audit(actions.PLUGIN_IMPORT, actor=current_user(), shop_id=shop.id,
+        audit(actions.PLUGIN_IMPORT, actor=current_user(),
               target_type="plugin", target_id=name, success=False, detail=str(exc))
         flash(f"Could not import plugin: {exc}", "error")
         return redirect(url_for("admin.plugins"))
 
-    plugin = Plugin.query.filter_by(shop_id=shop.id, name=name).first()
+    plugin = Plugin.query.filter_by(name=name).first()
     if plugin is None:
-        plugin = Plugin(shop_id=shop.id, name=name)
+        plugin = Plugin(name=name)
         db.session.add(plugin)
     plugin.is_third_party = True
     plugin.enabled = False
     db.session.commit()
 
     display_name = getattr(module, "PLUGIN_NAME", name)
-    audit(actions.PLUGIN_IMPORT, actor=current_user(), shop_id=shop.id,
+    audit(actions.PLUGIN_IMPORT, actor=current_user(),
           target_type="plugin", target_id=name, success=True, detail=f"display_name={display_name!r}")
     flash(f'Imported "{display_name}" - enable it below to show it on your storefront.', "success")
     return redirect(url_for("admin.plugins"))
@@ -180,8 +170,6 @@ def import_plugin():
 @limiter.limit("5 per minute")
 def upload_plugin():
     error = None
-    shop = current_shop()
-
     if request.method == "POST":
         plugin_name = request.form.get("plugin_name", "").strip()
         file = request.files.get("plugin_file")
@@ -215,9 +203,9 @@ def upload_plugin():
                             f.write(source_bytes)
 
                         # Mark it as third-party in the model
-                        plugin_row = Plugin.query.filter_by(shop_id=shop.id, name=plugin_name).first()
+                        plugin_row = Plugin.query.filter_by(name=plugin_name).first()
                         if not plugin_row:
-                            plugin_row = Plugin(shop_id=shop.id, name=plugin_name)
+                            plugin_row = Plugin(name=plugin_name)
                             db.session.add(plugin_row)
                         plugin_row.is_third_party = True
                         plugin_row.enabled = False
@@ -226,7 +214,7 @@ def upload_plugin():
                         # Same forensic level as the zip path's manifest:
                         # record exactly what was uploaded (filename + size),
                         # not just that "an upload happened."
-                        audit(actions.PLUGIN_IMPORT, actor=current_user(), shop_id=shop.id,
+                        audit(actions.PLUGIN_IMPORT, actor=current_user(),
                               target_type="plugin", target_id=plugin_name, success=True,
                               detail=f"single-file upload: {filename}({len(source_bytes)}b)")
                         flash("Plugin uploaded - enable it on the plugins page to show it on your storefront.", "success")
@@ -237,7 +225,7 @@ def upload_plugin():
         # left NO trace at all in the audit log - a real gap compared to the
         # zip path, which logs its manifest before validation even runs.
         if error is not None:
-            audit(actions.PLUGIN_IMPORT, actor=current_user(), shop_id=shop.id,
+            audit(actions.PLUGIN_IMPORT, actor=current_user(),
                   target_type="plugin", target_id=plugin_name or None, success=False,
                   detail=f"rejected: {error} (filename={original_filename!r})")
 
@@ -256,13 +244,12 @@ def security_settings():
     # toggles TRUSTED, statically-imported security features.
     import importlib
 
-    shop = current_shop()
     toggles = []
     for name in SECURITY_PLUGIN_NAMES:
         module = importlib.import_module(f"app.pluginmanager.security_plugins.{name}")
-        row = Plugin.query.filter_by(shop_id=shop.id, name=name).first()
+        row = Plugin.query.filter_by(name=name).first()
         if not row:
-            row = Plugin(shop_id=shop.id, name=name, enabled=True, is_third_party=False)
+            row = Plugin(name=name, enabled=True, is_third_party=False)
             db.session.add(row)
             db.session.commit()
         toggles.append({
@@ -275,10 +262,10 @@ def security_settings():
     if request.method == "POST":
         selected = set(request.form.getlist("enabled_features"))
         for name in SECURITY_PLUGIN_NAMES:
-            row = Plugin.query.filter_by(shop_id=shop.id, name=name).first()
+            row = Plugin.query.filter_by(name=name).first()
             row.enabled = name in selected
         db.session.commit()
-        audit(actions.PLUGIN_TOGGLE, actor=current_user(), shop_id=shop.id,
+        audit(actions.PLUGIN_TOGGLE, actor=current_user(),
               target_type="security_feature", detail=f"enabled={sorted(selected)}")
         flash("Security settings updated.", "success")
         return redirect(url_for("admin.security_settings"))
@@ -292,7 +279,6 @@ def security_settings():
         if locked_user:
             locked_accounts.append({
                 "username": locked_user.username,
-                "shop_id": locked_user.shop_id,
                 "seconds_remaining": entry["seconds_remaining"],
                 "strikes": entry["strikes"],
             })

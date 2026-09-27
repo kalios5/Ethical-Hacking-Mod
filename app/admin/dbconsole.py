@@ -51,7 +51,7 @@ from app import db
 from app.auth.routes import current_user as _current_user
 from app.logging.db_audit import actions, audit
 from app.Database.models import (
-    AuditLog, CartItem, DbChangeLog, Order, OrderItem, Plugin, Product, Shop, User,
+    AuditLog, CartItem, DbChangeLog, Order, OrderItem, Plugin, Product, User,
 )
 
 
@@ -121,11 +121,11 @@ class UserAdmin(GatedModelView):
     """Users table - deliberately shows the credential columns so an admin
     (and, via the intended broken-access path, an attacker) can read every
     account's hash and hashing mode straight out of the console."""
-    column_list = ("id", "shop_id", "username", "email",
+    column_list = ("id", "username", "email",
                    "password_hash", "hash_mode", "role", "is_active",
                    "failed_logins", "last_login", "created_at")
     column_searchable_list = ("username", "email", "role")
-    column_filters = ("role", "hash_mode", "is_active", "shop_id")
+    column_filters = ("role", "hash_mode", "is_active")
     column_labels = {"password_hash": "Password Hash", "hash_mode": "Hash Mode"}
 
 
@@ -163,7 +163,6 @@ def init_db_console(app):
         theme=BootstrapTheme(folder="bootstrap4", base_template="dbconsole/base.html"),
     )
     admin.add_view(UserAdmin(User, db, name="Users", endpoint="dbconsole_users"))
-    admin.add_view(GatedModelView(Shop, db, name="Shops", endpoint="dbconsole_shops"))
     admin.add_view(GatedModelView(Product, db, name="Products", endpoint="dbconsole_products"))
     admin.add_view(GatedModelView(Order, db, name="Orders", endpoint="dbconsole_orders"))
     admin.add_view(GatedModelView(OrderItem, db, name="Order Items", endpoint="dbconsole_orderitems"))

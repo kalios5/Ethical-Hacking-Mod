@@ -5,7 +5,7 @@ from sqlalchemy import or_
 
 from app import db
 from app.auth.routes import current_user, login_required
-from app.Database.models import CartItem, Order, OrderItem, Plugin, Product, Shop
+from app.Database.models import CartItem, Order, OrderItem, Plugin, Product
 from app.logging.db_audit import actions, audit
 from app.pluginmanager.loader import get_plugin
 from app.storefront import bp
@@ -14,20 +14,15 @@ ALLOWED_TAGS = ["div", "span", "p", "form", "input", "button", "strong", "em", "
 ALLOWED_ATTRS = {"input": ["type", "placeholder"], "*": ["class"]}
 
 
-def current_shop():
-    return Shop.query.order_by(Shop.id).first()
-
-
 @bp.route("/")
 def index():
-    shop = current_shop()
     query = request.args.get("q", "").strip()
-    products_query = Product.query.filter_by(shop_id=shop.id)
+    products_query = Product.query
     if query:
         term = f"%{query}%"
         products_query = products_query.filter(or_(Product.name.ilike(term), Product.description.ilike(term)))
     products = products_query.order_by(Product.created_at.desc()).all()
-    plugins = Plugin.query.filter_by(shop_id=shop.id, enabled=True).all()
+    plugins = Plugin.query.filter_by(enabled=True).all()
     widgets = []
     for plugin in plugins:
         try:
@@ -40,12 +35,12 @@ def index():
             widgets.append(bleach.clean(raw_html, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRS))
         except (ImportError, AttributeError):
             continue
-    return render_template("storefront/index.html", shop=shop, products=products, query=query, widgets=widgets)
+    return render_template("storefront/index.html", products=products, query=query, widgets=widgets)
 
 
 @bp.route("/product/<int:product_id>")
 def product_detail(product_id):
-    product = Product.query.filter_by(id=product_id, shop_id=current_shop().id).first_or_404()
+    product = Product.query.filter_by(id=product_id).first_or_404()
     return render_template("storefront/product.html", product=product)
 
 
@@ -61,7 +56,7 @@ def cart():
 @bp.route("/cart/add/<int:product_id>", methods=["POST"])
 @login_required
 def add_to_cart(product_id):
-    product = Product.query.filter_by(id=product_id, shop_id=current_shop().id).first_or_404()
+    product = Product.query.filter_by(id=product_id).first_or_404()
     try:
         quantity = max(1, int(request.form.get("quantity", 1)))
     except ValueError:
@@ -116,9 +111,8 @@ def checkout():
         return redirect(url_for("storefront.cart"))
     total_cents = 0
     order_items = []
-    shop = current_shop()
     for item in items:
-        product = Product.query.filter_by(id=item.product_id, shop_id=shop.id).with_for_update().first()
+        product = Product.query.filter_by(id=item.product_id).with_for_update().first()
         if product is None or item.quantity > product.stock:
             db.session.rollback()
             flash("One of your items is no longer available in that quantity.", "error")
@@ -126,7 +120,7 @@ def checkout():
         total_cents += item.quantity * product.price_cents
         product.stock -= item.quantity
         order_items.append((product, item))
-    order = Order(user_id=user.id, shop_id=shop.id, total_cents=total_cents, status="paid")
+    order = Order(user_id=user.id, total_cents=total_cents, status="paid")
     db.session.add(order)
     db.session.flush()
     for product, item in order_items:

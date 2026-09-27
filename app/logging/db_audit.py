@@ -61,8 +61,8 @@ def _request_defaults():
         return None, None, None
 
 
-def audit(action, actor=None, ip=None, shop_id=None,
-          target_type=None, target_id=None, success=True, detail=None,
+def audit(action, actor=None, ip=None, target_type=None, target_id=None,
+          success=True, detail=None,
           request_path=None):
     """Write one audit event. Never raises - logging must not break the app.
 
@@ -78,12 +78,10 @@ def audit(action, actor=None, ip=None, shop_id=None,
     actor_id = _actor_id(actor) if actor is not None else req_actor_id
     ip = ip if ip is not None else req_ip
     request_path = request_path if request_path is not None else req_path
-    shop = shop_id if shop_id is not None else getattr(actor, "shop_id", None)
-
     # 1) always write to the file log first (cheapest, most reliable).
     _log.info(
-        "action=%s actor=%s ip=%s shop=%s target=%s/%s success=%s path=%s detail=%s",
-        action, actor_id, ip, shop, target_type, target_id, success, request_path, detail,
+        "action=%s actor=%s ip=%s target=%s/%s success=%s path=%s detail=%s",
+        action, actor_id, ip, target_type, target_id, success, request_path, detail,
     )
 
     # 2) best-effort write to the audit_log table.
@@ -91,7 +89,7 @@ def audit(action, actor=None, ip=None, shop_id=None,
         from app import db
         from app.Database.models import AuditLog
         row = AuditLog(
-            actor_user_id=actor_id, actor_ip=ip, shop_id=shop,
+            actor_user_id=actor_id, actor_ip=ip,
             action=action, target_type=target_type,
             target_id=str(target_id) if target_id is not None else None,
             success=bool(success), detail=detail, request_path=request_path,

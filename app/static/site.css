@@ -330,6 +330,19 @@ textarea:focus {
   color: var(--muted)
 }
 
+.auth-switch-link {
+  color: var(--leaf);
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-color: var(--coral);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px
+}
+
+.auth-switch-link:hover {
+  color: var(--coral)
+}
+
 /* ============================================================
    Notices / flash messages
    ============================================================ */

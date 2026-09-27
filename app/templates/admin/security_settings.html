@@ -17,12 +17,11 @@
 <h2>Currently Locked-Out Accounts</h2>
 {% if locked_accounts %}
 <table>
-    <thead><tr><th>Username</th><th>Shop</th><th>Time Remaining</th><th>Strikes</th></tr></thead>
+    <thead><tr><th>Username</th><th>Time Remaining</th><th>Strikes</th></tr></thead>
     <tbody>
     {% for a in locked_accounts %}
         <tr>
             <td>{{ a.username }}</td>
-            <td>Shop #{{ a.shop_id }}</td>
             <td>{{ a.seconds_remaining }}s</td>
             <td>{{ a.strikes }}</td>
         </tr>

@@ -1,26 +1,10 @@
 from app import db
 from datetime import datetime
 
-class Shop(db.Model):
-    __tablename__ = "shops"
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(120), nullable=False)
-    domain = db.Column(db.String(190), nullable=False, unique=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-    users = db.relationship("User", backref="shop", cascade="all, delete-orphan")
-    products = db.relationship("Product", backref="shop", cascade="all, delete-orphan")
-    plugins = db.relationship("Plugin", backref="shop", cascade="all, delete-orphan")
-
-    def __repr__(self):
-        return f"<Shop {self.id} {self.domain}>"
-
-
 class User(db.Model):
     __tablename__ = "users"
     id = db.Column(db.Integer, primary_key=True)
-    shop_id = db.Column(db.Integer, db.ForeignKey("shops.id"), nullable=False)
-    username = db.Column(db.String(80), nullable=False)
+    username = db.Column(db.String(80), nullable=False, unique=True)
     email = db.Column(db.String(190), nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
     hash_mode = db.Column(db.String(16), nullable=False, default="weak")
@@ -36,10 +20,6 @@ class User(db.Model):
     failed_logins = db.Column(db.Integer, nullable=False, default=0)
     last_login = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-    __table_args__ = (
-        db.UniqueConstraint("shop_id", "username", name="uq_user_per_shop"),
-    )
 
     @property
     def avatar_url(self):
@@ -64,7 +44,6 @@ class User(db.Model):
 class Product(db.Model):
     __tablename__ = "products"
     id = db.Column(db.Integer, primary_key=True)
-    shop_id = db.Column(db.Integer, db.ForeignKey("shops.id"), nullable=False)
     name = db.Column(db.String(160), nullable=False)
     description = db.Column(db.Text)
     price_cents = db.Column(db.Integer, nullable=False, default=0)
@@ -94,7 +73,6 @@ class Order(db.Model):
     __tablename__ = "orders"
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    shop_id = db.Column(db.Integer, db.ForeignKey("shops.id"), nullable=False)
     total_cents = db.Column(db.Integer, nullable=False, default=0)
     status = db.Column(
         db.Enum("pending", "paid", "shipped", "cancelled",name="order_state"),
@@ -118,16 +96,11 @@ class OrderItem(db.Model):
 class Plugin(db.Model):
     __tablename__ = "plugins"
     id = db.Column(db.Integer, primary_key=True)
-    shop_id = db.Column(db.Integer, db.ForeignKey("shops.id"), nullable=False)
-    name = db.Column(db.String(100), nullable=False)
+    name = db.Column(db.String(100), nullable=False, unique=True)
     enabled = db.Column(db.Boolean, nullable=False, default=False)
     is_third_party = db.Column(db.Boolean, nullable=False, default=False)
     config_json = db.Column(db.JSON)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-    __table_args__ = (
-        db.UniqueConstraint("shop_id", "name", name="uq_plugin_per_shop"),
-    )
 
 
 class AuditLog(db.Model):
@@ -137,7 +110,6 @@ class AuditLog(db.Model):
     ts = db.Column(db.DateTime, default=datetime.utcnow, index=True)
     actor_user_id = db.Column(db.Integer, index=True)
     actor_ip = db.Column(db.String(45))
-    shop_id = db.Column(db.Integer)
     action = db.Column(db.String(80), nullable=False, index=True)
     target_type = db.Column(db.String(40))
     target_id = db.Column(db.String(64))

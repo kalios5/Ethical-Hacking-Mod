@@ -16,8 +16,8 @@ from app.auth import twofa
 from app.uploads import delete_avatar, save_avatar
 
 
-def _feature_enabled(shop_id, name):
-    toggle = Plugin.query.filter_by(shop_id=shop_id, name=name).first()
+def _feature_enabled(name):
+    toggle = Plugin.query.filter_by(name=name).first()
     return toggle.enabled if toggle else True
 
 
@@ -44,10 +44,7 @@ def login():
         password = request.form.get("password", "")
         ip = request.remote_addr
 
-        # Shop 1 is the only shop in local/dev use - all three security
-        # feature toggles below are scoped to it (see
-        # /admin/security-settings).
-        ip_limit_enabled = _feature_enabled(1, "ip_rate_limit")
+        ip_limit_enabled = _feature_enabled("ip_rate_limit")
         if ip_limit_enabled and ip_limiter.is_ip_blocked(ip):
             remaining = ip_limiter.seconds_until_reset(ip)
             audit(actions.ACCESS_DENIED, ip=ip, success=False,
@@ -59,12 +56,12 @@ def login():
 
         # Prototype security plugin, statically imported (see
         # pluginmanager/security_plugins/temp_lockout/__init__.py). Only enforced when
-        # this shop has it enabled via /admin/security-settings.
-        lockout_enabled = _feature_enabled(existing_user.shop_id, "temp_lockout") if existing_user else True
+        # enabled via /admin/security-settings.
+        lockout_enabled = _feature_enabled("temp_lockout") if existing_user else True
         if existing_user and lockout_enabled and is_locked_out(existing_user):
             remaining = seconds_remaining(existing_user)
             audit(actions.ACCESS_DENIED, actor=existing_user, ip=ip,
-                  shop_id=existing_user.shop_id, target_type="user",
+                  target_type="user",
                   target_id=existing_user.id, success=False,
                   detail=f"temporary lockout, {remaining}s remaining")
             flash(f"Too many failed attempts. Try again in {remaining} seconds.", "error")
@@ -85,7 +82,7 @@ def login():
                 session["pending_2fa_ip"] = ip
                 session["pending_2fa_check_time"] = check_time.isoformat()
                 reset_on_success(user)
-                audit(actions.TWOFA_CHALLENGE, actor=user, ip=ip, shop_id=user.shop_id,
+                audit(actions.TWOFA_CHALLENGE, actor=user, ip=ip,
                       target_type="user", target_id=user.id, success=True,
                       detail="password ok, awaiting 2FA")
                 return redirect(url_for("auth.two_factor"))
@@ -97,7 +94,7 @@ def login():
             session["user_id"] = user.id
             reset_on_success(user)
 
-            new_device_enabled = _feature_enabled(user.shop_id, "new_device_alert")
+            new_device_enabled = _feature_enabled("new_device_alert")
             if new_device_enabled and is_new_ip(user, ip, check_time):
                 flash("New sign-in detected from an unrecognized location.", "notice")
 
@@ -141,9 +138,9 @@ def two_factor():
             check_time_raw = session.get("pending_2fa_check_time")
             session.clear()
             session["user_id"] = user.id
-            audit(actions.TWOFA_SUCCESS, actor=user, ip=ip, shop_id=user.shop_id,
+            audit(actions.TWOFA_SUCCESS, actor=user, ip=ip,
                   target_type="user", target_id=user.id, success=True, detail="2FA verified, login complete")
-            new_device_enabled = _feature_enabled(user.shop_id, "new_device_alert")
+            new_device_enabled = _feature_enabled("new_device_alert")
             if new_device_enabled and check_time_raw:
                 try:
                     if is_new_ip(user, ip, datetime.fromisoformat(check_time_raw)):
@@ -154,7 +151,7 @@ def two_factor():
             return redirect(url_for("storefront.index"))
 
         audit(actions.ACCESS_DENIED, actor=user, ip=session.get("pending_2fa_ip"),
-              shop_id=user.shop_id, target_type="user", target_id=user.id,
+              target_type="user", target_id=user.id,
               success=False, detail="bad 2FA code")
         flash("Invalid authentication code.", "error")
 
@@ -172,7 +169,7 @@ def register():
         elif User.query.filter_by(username=username).first():
             flash("That username is already in use.", "error")
         else:
-            user = User(shop_id=1, username=username, email=email, role="customer", hash_mode="secure")
+            user = User(username=username, email=email, role="customer", hash_mode="secure")
             user.set_password(password, "secure")
             db.session.add(user)
             db.session.commit()
@@ -205,7 +202,7 @@ def account():
             if password:
                 user.set_password(password, "secure")
             db.session.commit()
-            audit(actions.PROFILE_UPDATED, actor=user, shop_id=user.shop_id,
+            audit(actions.PROFILE_UPDATED, actor=user,
                   target_type="user", target_id=user.id, success=True,
                   detail="avatar changed" if avatar and avatar.filename else "profile updated")
             flash("Account updated.", "success")
@@ -218,7 +215,7 @@ def remove_avatar():
     user = current_user()
     delete_avatar(user)
     db.session.commit()
-    audit(actions.PROFILE_UPDATED, actor=user, shop_id=user.shop_id,
+    audit(actions.PROFILE_UPDATED, actor=user,
           target_type="user", target_id=user.id, success=True, detail="avatar removed")
     flash("Profile picture removed.", "success")
     return redirect(url_for("auth.account"))
@@ -250,7 +247,7 @@ def two_factor_setup():
         if twofa.verify_code(user, code):
             user.twofa_enabled = True
             db.session.commit()
-            audit(actions.TWOFA_SUCCESS, actor=user, shop_id=user.shop_id,
+            audit(actions.TWOFA_SUCCESS, actor=user,
                   target_type="user", target_id=user.id, success=True, detail="2FA enabled")
             flash("Two-factor authentication is now enabled.", "success")
             return redirect(url_for("auth.account"))
@@ -270,7 +267,7 @@ def two_factor_disable():
     user.twofa_enabled = False
     user.twofa_secret = None
     db.session.commit()
-    audit(actions.TWOFA_SUCCESS, actor=user, shop_id=user.shop_id,
+    audit(actions.TWOFA_SUCCESS, actor=user,
           target_type="user", target_id=user.id, success=True, detail="2FA disabled")
     flash("Two-factor authentication has been disabled.", "success")
     return redirect(url_for("auth.account"))

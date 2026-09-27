@@ -8,8 +8,7 @@ called from auth/routes.py::login().
 
 Seeded logins (see app/__init__.py::_seed_development_data()):
     superadmin / SuperSecret@2026   (role: superadmin)
-    admin      / admin              (role: admin,    shop 1 roses-4-sale)
-    admin      / Petal!2026         (role: admin,    shop 2 poppies-2-buy)
+    admin      / admin              (role: admin)
     alice      / password1          (role: customer)
 """
 from datetime import datetime
@@ -27,7 +26,7 @@ def _audit(*args, **kwargs):
         pass
 
 
-def authenticate(username, password, shop_id=None, ip=None):
+def authenticate(username, password, ip=None):
     """Return the User on success, or None.
 
     Logs LOGIN_SUCCESS / LOGIN_FAILED either way, and keeps
@@ -36,10 +35,7 @@ def authenticate(username, password, shop_id=None, ip=None):
     """
     from app.logging.db_audit import actions
 
-    q = User.query.filter_by(username=username)
-    if shop_id is not None:
-        q = q.filter_by(shop_id=shop_id)
-    user = q.first()
+    user = User.query.filter_by(username=username).first()
 
     # Unknown username.
     if user is None:
@@ -76,12 +72,11 @@ def authenticate(username, password, shop_id=None, ip=None):
     return user
 
 
-def create_user(shop_id, username, email, password, role="customer", mode='weak'):
+def create_user(username, email, password, role="customer", mode='weak'):
     """Helper for the admin console / user-management member."""
     from app.logging.db_audit import actions
 
-    user = User(shop_id=shop_id, username=username, email=email,
-                role=role, hash_mode=mode)
+    user = User(username=username, email=email, role=role, hash_mode=mode)
     user.set_password(password, mode)
     db.session.add(user)
     db.session.commit()
