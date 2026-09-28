@@ -235,7 +235,7 @@ def single_import():
     return render_template("admin/upload_plugin.html", error=error)
 
 
-SECURITY_PLUGIN_NAMES = ["temp_lockout", "new_device_alert", "ip_rate_limit"]
+SECURITY_PLUGIN_NAMES = ["temp_lockout", "new_device_alert", "ip_rate_limit", "login_captcha"]
 
 
 @bp.route("/security-settings", methods=["GET", "POST"])
