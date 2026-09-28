@@ -97,8 +97,33 @@ def create_app(config_class=None):
     app.jinja_env.globals.pop('config', None)
     app.jinja_env.globals['config'] = SafeConfigProxy(app.config)
 
+    # Fail closed on a missing/placeholder SECRET_KEY in a real deployment.
+    # SECRET_KEY signs session cookies AND CSRF tokens, so a fallback like
+    # "TEST" in production would let anyone forge an admin session. TESTING
+    # (local/dev SQLite) is exempt so `python main.py` still runs.
+    if not app.config.get("TESTING"):
+        secret = app.config.get("SECRET_KEY")
+        if not secret or secret == "TEST":
+            raise RuntimeError(
+                "SECRET_KEY must be set to a strong, secret value in production "
+                "(set the SECRET_KEY environment variable)."
+            )
+
     from app.logging.app_logging import configure_logging
     configure_logging(app)
+
+    # Trust the reverse proxy's X-Forwarded-Proto/-For in production, so
+    # request.is_secure is True behind a TLS-terminating proxy. Without this,
+    # HSTS (below) and the Secure session cookie would never activate in prod
+    # because Flask would see every proxied request as plain http. Scoped to
+    # non-testing so the dev/demo server is unchanged.
+    if not app.config.get("TESTING"):
+        from werkzeug.middleware.proxy_fix import ProxyFix
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
+
+    # General browser-side security headers (attack-safe; see module docstring).
+    from app.security_headers import init_security_headers
+    init_security_headers(app)
 
     db.init_app(app)
     migrate.init_app(app,db)
