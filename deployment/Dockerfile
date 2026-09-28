@@ -10,7 +10,7 @@ RUN pip install gunicorn
 
 COPY app app
 COPY migrations migrations
-COPY main.py app/config.py deployment/boot.sh ./
+COPY main.py deployment/boot.sh ./
 RUN chmod a+x boot.sh
 
 EXPOSE 5000

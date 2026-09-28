@@ -14,17 +14,17 @@ engineering hygiene: a safe folder/module name, a zip-slip-safe extraction,
 size limits, and rolling back cleanly on a bad upload.
 """
 import importlib
-import os
 import pkgutil
 import re
 import shutil
 import sys
 import tempfile
 import zipfile
+from pathlib import Path, PurePosixPath
 
 from app.pluginmanager import plugins  # the uploadable-plugins package
 
-PLUGINS_DIR = plugins.__path__[0]
+PLUGINS_DIR = Path(plugins.__path__[0])
 
 # Shipped plugins - import_third_party_plugin() refuses to overwrite these.
 BUILTIN_PLUGIN_NAMES = {"welcome_message", "discount_banner", "newsletter_signup"}
@@ -76,11 +76,14 @@ def _reject_builtin_collision(name):
 def _safe_member_path(staging_dir, member_name):
     """Resolve a zip member's target path, raising if it would escape
     staging_dir (zip-slip) or uses an absolute/drive path."""
-    if os.path.isabs(member_name) or (len(member_name) > 1 and member_name[1] == ":"):
+    # Zip member names are POSIX-style regardless of host OS, so PurePosixPath
+    # is the correct thing to check .is_absolute() on here - not Path (which
+    # would apply this OS's own path semantics) or os.path.isabs.
+    if PurePosixPath(member_name).is_absolute() or (len(member_name) > 1 and member_name[1] == ":"):
         raise PluginValidationError(f"Zip contains an absolute path: {member_name!r}")
-    target = os.path.realpath(os.path.join(staging_dir, member_name))
-    staging_real = os.path.realpath(staging_dir)
-    if target != staging_real and not target.startswith(staging_real + os.sep):
+    target = Path(staging_dir, member_name).resolve()
+    staging_real = Path(staging_dir).resolve()
+    if target != staging_real and not target.is_relative_to(staging_real):
         raise PluginValidationError(f"Zip entry escapes its own folder: {member_name!r}")
     return target
 
@@ -126,9 +129,9 @@ def _extract_zip_safely(file_storage, staging_dir):
                 raise PluginValidationError(f"Zip entry uses a parent path: {info.filename!r}")
             target = _safe_member_path(staging_dir, info.filename)
             if info.is_dir():
-                os.makedirs(target, exist_ok=True)
+                target.mkdir(parents=True, exist_ok=True)
                 continue
-            os.makedirs(os.path.dirname(target), exist_ok=True)
+            target.parent.mkdir(parents=True, exist_ok=True)
             with zf.open(info) as src, open(target, "wb") as dst:
                 shutil.copyfileobj(src, dst)
 
@@ -136,14 +139,15 @@ def _extract_zip_safely(file_storage, staging_dir):
 
 
 def _locate_plugin_root(staging_dir):
-    if os.path.isfile(os.path.join(staging_dir, "__init__.py")):
+    staging_dir = Path(staging_dir)
+    if (staging_dir / "__init__.py").is_file():
         return staging_dir
 
     # Common case: the zip wraps everything in one top-level folder.
-    entries = [e for e in os.listdir(staging_dir) if not e.startswith("__MACOSX")]
-    if len(entries) == 1 and os.path.isdir(os.path.join(staging_dir, entries[0])):
-        candidate = os.path.join(staging_dir, entries[0])
-        if os.path.isfile(os.path.join(candidate, "__init__.py")):
+    entries = [p for p in staging_dir.iterdir() if not p.name.startswith("__MACOSX")]
+    if len(entries) == 1 and entries[0].is_dir():
+        candidate = entries[0]
+        if (candidate / "__init__.py").is_file():
             return candidate
 
     raise PluginValidationError("Zip must contain an __init__.py (at its root, or in one wrapping folder).")
@@ -231,16 +235,16 @@ def import_third_party_plugin(name, file_storage):
     _validate_name(name)
     _reject_builtin_collision(name)
 
-    target_dir = os.path.join(PLUGINS_DIR, name)
+    target_dir = PLUGINS_DIR / name
     backup_dir = None
 
     with tempfile.TemporaryDirectory(prefix="plugin_import_") as staging_dir:
         plugin_root = _extract_zip_safely(file_storage, staging_dir)
 
         try:
-            if os.path.exists(target_dir):
-                backup_dir = target_dir + ".bak"
-                if os.path.exists(backup_dir):
+            if target_dir.exists():
+                backup_dir = target_dir.with_name(target_dir.name + ".bak")
+                if backup_dir.exists():
                     shutil.rmtree(backup_dir)
                 shutil.move(target_dir, backup_dir)
             shutil.copytree(plugin_root, target_dir)

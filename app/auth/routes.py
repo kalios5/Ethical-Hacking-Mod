@@ -223,8 +223,11 @@ def remove_avatar():
 
 @bp.route("/avatar/<filename>")
 def avatar(filename):
-    # Only names we generated ({uuid hex}.png) are ever served.
-    if not re.fullmatch(r"[0-9a-f]{32}\.png", filename):
+    # Saved files keep their upload extension (see app/uploads.py::save_avatar,
+    # AVATAR_EXTENSIONS), not just .png. No "/" is permitted here regardless,
+    # so a *read* of this route can't traverse out of UPLOADED_AVATARS_DEST -
+    # send_from_directory's own safe_join check runs on top of this either way.
+    if not re.fullmatch(r"[\w.-]+\.(?:jpg|jpeg|png|webp)", filename, re.IGNORECASE):
         abort(404)
     response = send_from_directory(current_app.config["UPLOADED_AVATARS_DEST"], filename)
     response.headers["X-Content-Type-Options"] = "nosniff"

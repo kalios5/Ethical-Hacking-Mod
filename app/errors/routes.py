@@ -1,9 +1,7 @@
 """
-app/errors/routes.py  -  one error page for every error.
+app/errors/routes.py  -  one error page for every error, PRODUCTION ONLY.
 
-Two handlers, registered app-wide (via @bp.app_errorhandler, not
-@bp.errorhandler - these fire regardless of which blueprint raised the
-error):
+register_error_handlers(app) wires two handlers app-wide:
 
   * HTTPException - covers every "expected" HTTP error (400/401/403/404/405/
     429/...), including abort(403) in app/admin/routes.py's admin_required
@@ -11,10 +9,16 @@ error):
   * Exception - anything else, i.e. a genuine unhandled bug, which would
     otherwise become a bare 500. This handler *returns* the rendered page
     instead of re-raising, which is what makes it win over Werkzeug's
-    interactive debugger even when DEBUG=True (the local/dev config) - by
-    design, per the "one error page for any error" ask. The full traceback
-    is still logged to logs/app.log either way, so nothing is lost, it's
-    just not shown in-browser.
+    interactive debugger.
+
+Both are registered ONLY when app.debug is False - i.e. only under
+ProductionConfig (see app/config.py; TestPostgresConfig sets DEBUG=True).
+Under the local/test config, register_error_handlers() is a no-op, so
+Werkzeug's own interactive debugger (for real bugs) and default error pages
+(for HTTPExceptions) are used instead - far more useful during development
+than the styled "something went wrong" page. In production the full
+traceback is still logged to logs/app.log either way, so nothing is lost,
+it's just not shown in-browser.
 
 (This supersedes app/logging/app_logging.py's old @app.errorhandler(Exception),
 which only logged and re-raised - registering a second handler for the same
@@ -25,22 +29,26 @@ import logging
 from flask import render_template
 from werkzeug.exceptions import HTTPException
 
-from app.errors import bp
-
 _log = logging.getLogger("request")
 
 
-@bp.app_errorhandler(HTTPException)
-def handle_http_exception(e):
+def _handle_http_exception(e):
     return render_template(
         "errors/error.html", code=e.code or 500, title=e.name, message=e.description,
     ), (e.code or 500)
 
 
-@bp.app_errorhandler(Exception)
-def handle_unexpected_exception(e):
+def _handle_unexpected_exception(e):
     _log.exception("Unhandled exception")
     return render_template(
         "errors/error.html", code=500, title="Internal Server Error",
         message="Something went wrong on our end. It's been logged - please try again.",
     ), 500
+
+
+def register_error_handlers(app):
+    """Wire the custom error pages - production only (see module docstring)."""
+    if app.debug:
+        return
+    app.register_error_handler(HTTPException, _handle_http_exception)
+    app.register_error_handler(Exception, _handle_unexpected_exception)

@@ -2,57 +2,45 @@
 logging_setup/app_logging.py  -  application logging.
 
 Sets up python's logging so that:
-  * everything goes to logs/app.log (rotating, so it can't fill the EC2 disk)
-  * a copy goes to the console / docker logs
+  * everything goes to a single logs/app.log file (no rotation, no console copy)
   * every HTTP request is logged with method, path, status, client IP
 
 The logs/ folder is bind-mounted to the host in docker-compose, so the logs
-survive container restarts and are available to the blue-team (and to the
-Docker-Escape PoC, which reads the logs folder).
+survive container restarts and are available to the blue-team.
 """
 import logging
 import os
 import time
-from logging.handlers import TimedRotatingFileHandler
+from pathlib import Path
 
 from flask import g, request
 
-LOG_DIR = os.environ.get("LOG_DIR", "logs")
-LOG_FILE = os.path.join(LOG_DIR, "app.log")
-LOG_RETENTION_DAYS = 7
+LOG_DIR = Path(os.environ.get("LOG_DIR", "logs"))
+LOG_FILE = LOG_DIR / "app.log"
 
 LOG_FORMAT = "%(asctime)s %(levelname)-7s [%(name)s] %(message)s"
 DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 
 def configure_logging(app):
-    """Attach handlers to the Flask app logger and install request hooks."""
-    os.makedirs(LOG_DIR, exist_ok=True)
+    """Attach a single file handler to the root logger and install hooks."""
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
 
     level = logging.DEBUG if app.config.get("DEBUG") else logging.INFO
     formatter = logging.Formatter(LOG_FORMAT, datefmt=DATE_FORMAT)
 
-    # Rolls over once a day and keeps LOG_RETENTION_DAYS (~1 week) of history,
-    # deleting anything older - bounds logs/app.log by age, not just by size.
-    file_handler = TimedRotatingFileHandler(
-        LOG_FILE, when="midnight", interval=1, backupCount=LOG_RETENTION_DAYS,
-    )
+    # Plain file handler: everything is appended to the one logs/app.log file.
+    # No rotation (single file only) and no console/StreamHandler copy.
+    file_handler = logging.FileHandler(LOG_FILE)
     file_handler.setFormatter(formatter)
     file_handler.setLevel(level)
-
-    console = logging.StreamHandler()
-    console.setFormatter(formatter)
-    console.setLevel(level)
 
     # Configure the root logger so our modules AND werkzeug/sqlalchemy flow in.
     root = logging.getLogger()
     root.setLevel(level)
     # Avoid duplicate handlers if configure_logging() is called twice.
-    if not any(isinstance(h, TimedRotatingFileHandler) for h in root.handlers):
+    if not any(isinstance(h, logging.FileHandler) for h in root.handlers):
         root.addHandler(file_handler)
-    if not any(isinstance(h, logging.StreamHandler) and not isinstance(h, TimedRotatingFileHandler)
-               for h in root.handlers):
-        root.addHandler(console)
 
     app.logger.setLevel(level)
     app.logger.info("Logging initialised -> %s (level=%s)", LOG_FILE, logging.getLevelName(level))

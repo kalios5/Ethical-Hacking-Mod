@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 from dotenv import load_dotenv
 
@@ -7,42 +8,50 @@ from dotenv import load_dotenv
 # below are actually populated outside of docker-compose's own interpolation.
 load_dotenv()
 
-basedir = os.path.abspath(os.path.dirname(__file__))
 
-# Caps the whole request body Werkzeug will read (e.g. the plugin-import zip
-# upload in app/admin/routes.py) - complements the in-app zip entry/size
-# checks in app/pluginmanager/loader.py, which only run after a request body
-# has already been read.
-MAX_CONTENT_LENGTH = 5 * 1024 * 1024  # 5 MB
+class BaseConfig:
+    """Settings shared by every environment. Resolved here, as class
+    attributes on a shared base, rather than as module-level variables
+    computed before the classes and then copied into each one."""
 
-# Profile pictures live outside app/static so they are only reachable through
-# the auth.avatar route. AVATAR_MAX_BYTES is the tighter per-image cap.
-UPLOADED_AVATARS_DEST = os.environ.get("AVATAR_DIR") or os.path.join(os.path.dirname(basedir), "uploads", "avatars")
-AVATAR_MAX_BYTES = 2 * 1024 * 1024
-AVATAR_SIZE = 256
+    BASEDIR = Path(__file__).resolve().parent
 
-
-class TestPostgresConfig:
-    DEBUG = True
     SECRET_KEY = os.environ.get("SECRET_KEY") or "TEST"
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'app.db')
+
+    # Caps the whole request body Werkzeug will read (e.g. the plugin-import
+    # zip upload in app/admin/routes.py) - complements the in-app zip
+    # entry/size checks in app/pluginmanager/loader.py, which only run after
+    # a request body has already been read.
+    MAX_CONTENT_LENGTH = 5 * 1024 * 1024  # 5 MB
+
+    # Profile pictures live outside app/static so they are only reachable
+    # through the auth.avatar route. AVATAR_MAX_BYTES is the tighter
+    # per-image cap.
+    UPLOADED_AVATARS_DEST = os.environ.get("AVATAR_DIR") or (BASEDIR.parent / "uploads" / "avatars")
+    AVATAR_MAX_BYTES = 2 * 1024 * 1024
+    AVATAR_SIZE = 256
+
+    # Normally Flask only sets this True when DEBUG is True, so under
+    # ProductionConfig (DEBUG=False) Jinja compiles each template once and
+    # never rechecks it on disk - a template overwritten after that first
+    # render (e.g. via the avatar-upload path traversal, see app/uploads.py)
+    # would sit there unused until the process restarts. Forcing it True
+    # here means a template landed on disk takes effect on the very next
+    # request that renders it, in every environment.
+    TEMPLATES_AUTO_RELOAD = True
+
+
+class TestPostgresConfig(BaseConfig):
+    DEBUG = True
+    SQLALCHEMY_DATABASE_URI = f"sqlite:///{BaseConfig.BASEDIR / 'app.db'}"
     TESTING = True
-    MAX_CONTENT_LENGTH = MAX_CONTENT_LENGTH
-    UPLOADED_AVATARS_DEST = UPLOADED_AVATARS_DEST
-    AVATAR_MAX_BYTES = AVATAR_MAX_BYTES
-    AVATAR_SIZE = AVATAR_SIZE
 
 
-class ProductionConfig:
+class ProductionConfig(BaseConfig):
     DEBUG = False
     TESTING = False
-    SECRET_KEY = os.environ.get("SECRET_KEY") or "TEST"
     DB_USERNAME = os.environ.get("DB_USERNAME")
     DB_PASSWORD = os.environ.get("DB_PASSWORD")
     DB_NAME = os.environ.get("DB_NAME")
     SQLALCHEMY_DATABASE_URI = f"postgresql://{DB_USERNAME}:{DB_PASSWORD}@db:5432/{DB_NAME}"
     POSTS_PER_PAGE = 12
-    MAX_CONTENT_LENGTH = MAX_CONTENT_LENGTH
-    UPLOADED_AVATARS_DEST = UPLOADED_AVATARS_DEST
-    AVATAR_MAX_BYTES = AVATAR_MAX_BYTES
-    AVATAR_SIZE = AVATAR_SIZE

