@@ -24,7 +24,7 @@ CONTAINER_NAME="${CONTAINER_NAME:-tenant_app}"
 
 # Path inside the container where the app writes logs.
 # This is the directory the malicious plugin plants the CopyEscape trap in.
-CONTAINER_LOG_FILE="/var/log/app/app.log"
+CONTAINER_LOG_FILE="/logs/app.log"
 
 # Host-side directory where logs are collected.
 HOST_LOG_DIR="/var/platform/logs/${CONTAINER_NAME}"
