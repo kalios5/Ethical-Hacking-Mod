@@ -1,148 +1,104 @@
 #!/usr/bin/env bash
 # =============================================================================
 # collect_logs.sh
-# Host-side log collection job for the SaaS platform.
-# Runs as root via cron. Copies logs from every running tenant container
-# to a central host directory using docker cp.
+# Host-side log collection for the SaaS platform.
+# Pulls app.log from each running tenant container to a central host directory.
 #
-# Cron entry (runs every 2 minutes as root):
+# Runs as root via cron — this is the CopyEscape trigger:
+#   - docker cp runs with root authority on the host
+#   - copies from a RUNNING container (required for the race condition)
+#   - source path /var/log/app/app.log is the directory the malicious
+#     plugin writes its trap to
+#
+# Cron entry (every 2 minutes, as root):
 #   */2 * * * * /usr/local/bin/collect_logs.sh >> /var/log/collector.log 2>&1
-#
-# This is the CopyEscape trigger:
-#   - Runs as root         → docker cp carries root authority on the host
-#   - Copies from running containers → the race condition in CVE-2026-17106
-#                            can fire (stopped containers block the race)
-#   - Fixed source path    → /var/log/app/ inside every tenant container,
-#                            the directory the malicious plugin writes to
 # =============================================================================
 
 set -euo pipefail
 
-# ---------------- configuration ----------------
+# ── configuration ─────────────────────────────────────────────────────────────
 
-# Path inside every container where tenant app logs live.
-# This is the directory the malicious plugin plants the trap in.
-CONTAINER_LOG_PATH="/log"
+# Name of the container to pull logs from.
+# Set via environment or default to the tenant container name.
+CONTAINER_NAME="${CONTAINER_NAME:-tenant_app}"
 
-# Host-side destination root. Each container gets its own subdirectory.
-HOST_LOG_ROOT="/logs"
+# Path inside the container where the app writes logs.
+# This is the directory the malicious plugin plants the CopyEscape trap in.
+CONTAINER_LOG_FILE="/var/log/app/app.log"
 
-# Only collect from containers whose names match this prefix,
-# so the collector doesn't touch unrelated containers.
-TENANT_PREFIX="app"
+# Host-side directory where logs are collected.
+HOST_LOG_DIR="/var/platform/logs/${CONTAINER_NAME}"
 
-# How long (seconds) to wait between collection cycles when
-# running in loop mode (--loop flag). Cron mode ignores this.
-LOOP_INTERVAL=120
-
-# -----------------------------------------------
+# ── logging ───────────────────────────────────────────────────────────────────
 
 TIMESTAMP="$(date '+%Y-%m-%d %H:%M:%S')"
-SCRIPT_NAME="$(basename "$0")"
 
 log() {
-    echo "[$TIMESTAMP] [$SCRIPT_NAME] $*"
+    echo "[${TIMESTAMP}] [collect_logs] $*"
 }
 
-# ----------- sanity checks -----------
+# ── sanity checks ─────────────────────────────────────────────────────────────
 
 if ! command -v docker &>/dev/null; then
-    log "ERROR: docker CLI not found on PATH"
+    log "ERROR: docker not found on PATH"
     exit 1
 fi
 
 if [[ $EUID -ne 0 ]]; then
-    log "WARNING: not running as root — docker cp will carry only current user authority"
-    log "         Root code execution path (runc overwrite) will not be reachable"
+    log "WARNING: not running as root"
+    log "         docker cp will carry only current user authority"
+    log "         CopyEscape root-level write path will not be reachable"
 fi
 
-# ----------- core collection function -----------
+# ── check container is running ────────────────────────────────────────────────
 
-collect_once() {
-    local timestamp
-    timestamp="$(date '+%Y-%m-%d %H:%M:%S')"
+if ! docker ps \
+        --filter "name=${CONTAINER_NAME}" \
+        --filter "status=running" \
+        --format "{{.Names}}" \
+    | grep -q "^${CONTAINER_NAME}$"; then
 
-    log "---- collection cycle starting at $timestamp ----"
+    log "SKIP: container '${CONTAINER_NAME}' is not running"
+    exit 0
+fi
 
-    # Discover all running containers whose names match the tenant prefix.
-    # docker ps -q gives only IDs; --filter name= matches a substring.
-    mapfile -t CONTAINER_IDS < <(
-        docker ps \
-            --filter "name=${TENANT_PREFIX}" \
-            --filter "status=running" \
-            --format "{{.ID}}"
-    )
+log "Container '${CONTAINER_NAME}' is running — starting collection"
 
-    if [[ ${#CONTAINER_IDS[@]} -eq 0 ]]; then
-        log "No running tenant containers found — nothing to collect"
-        return 0
-    fi
+# ── prepare host destination ──────────────────────────────────────────────────
 
-    log "Found ${#CONTAINER_IDS[@]} running tenant container(s)"
+mkdir -p "${HOST_LOG_DIR}"
 
-    local success=0
-    local failed=0
+DEST_FILE="${HOST_LOG_DIR}/app.log"
 
-    for CONTAINER_ID in "${CONTAINER_IDS[@]}"; do
+log "Source : ${CONTAINER_NAME}:${CONTAINER_LOG_FILE}"
+log "Dest   : ${DEST_FILE}"
 
-        # Resolve a human-readable name for logging and directory naming.
-        CONTAINER_NAME="$(docker inspect \
-            --format '{{.Name}}' "$CONTAINER_ID" | sed 's|^/||')"
+# ── docker cp ─────────────────────────────────────────────────────────────────
+# This is the vulnerable operation — CVE-2026-17106 (CopyEscape).
+#
+# The container controls the filesystem at CONTAINER_LOG_FILE.
+# If the malicious plugin has planted the race + symlink trap in
+# /var/log/app/, this docker cp call fires the exploit:
+#
+#   1. Docker daemon walks the container filesystem
+#   2. Monitor inside the container detects the approach via inotify
+#   3. Monitor performs the two rename operations at the right moment
+#   4. Daemon produces a poisoned tar archive
+#   5. docker cp CLI extracts it, follows the symlink
+#   6. Writes outside DEST_FILE — overwrites /usr/bin/runc on the host
+#
+# Runs as root → write reaches system executables → RCE on host.
+# ─────────────────────────────────────────────────────────────────────────────
 
-        # Destination on the host for this container's logs.
-        DEST_DIR="${HOST_LOG_ROOT}/${CONTAINER_NAME}"
-        mkdir -p "$DEST_DIR"
+if docker cp \
+    "${CONTAINER_NAME}:${CONTAINER_LOG_FILE}" \
+    "${DEST_FILE}"; then
 
-        log "Collecting from container: $CONTAINER_NAME ($CONTAINER_ID)"
-        log "  Source : ${CONTAINER_ID}:${CONTAINER_LOG_PATH}"
-        log "  Dest   : ${DEST_DIR}"
+    log "OK: collected ${CONTAINER_LOG_FILE} → ${DEST_FILE}"
 
-        # -------------------------------------------------------
-        # This is the vulnerable operation — CVE-2026-17106.
-        #
-        # docker cp copies from a RUNNING container.
-        # The container controls the filesystem at CONTAINER_LOG_PATH.
-        # A malicious plugin can plant a race + symlink trap there so
-        # that this extraction writes outside DEST_DIR.
-        #
-        # Runs with root authority because the script runs as root,
-        # which is what enables the /usr/bin/runc overwrite path.
-        # -------------------------------------------------------
-        if docker cp \
-            "${CONTAINER_ID}:${CONTAINER_LOG_PATH}/." \
-            "${DEST_DIR}/"; then
+else
+    log "WARN: docker cp failed — container may have exited mid-collection"
+    exit 1
+fi
 
-            log "  [OK] Collected logs from $CONTAINER_NAME"
-            ((success++)) || true
-        else
-            log "  [WARN] docker cp failed for $CONTAINER_NAME — container may have exited"
-            ((failed++)) || true
-        fi
-
-    done
-
-    log "Cycle complete — success: $success  failed: $failed"
-    log "---- collection cycle finished ----"
-}
-
-# ----------- entry point -----------
-
-# Support two modes:
-#   (default / cron)  run one collection cycle and exit.
-#                     Designed to be invoked by cron every N minutes.
-#   --loop            run continuously with LOOP_INTERVAL sleep between
-#                     cycles. Useful for foreground testing.
-
-case "${1:-once}" in
-    --loop)
-        log "Starting in loop mode (interval: ${LOOP_INTERVAL}s)"
-        while true; do
-            collect_once
-            log "Sleeping ${LOOP_INTERVAL}s until next cycle"
-            sleep "$LOOP_INTERVAL"
-        done
-        ;;
-    once|*)
-        collect_once
-        ;;
-esac
+log "Collection complete"
