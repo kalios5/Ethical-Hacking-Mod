@@ -1,4 +1,42 @@
+# Box Write-up
+
 # SERVER SETUP
+# system update
+sudo apt-get update && sudo apt-get upgrade -y
+sudo apt-get install -y \
+    ca-certificates \
+    curl \
+    gnupg \
+    lsb-release \
+    openssh-server
+
+# Docker Engine <= 29.6.1 install
+# Add Docker's official GPG key
+install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
+    | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+chmod a+r /etc/apt/keyrings/docker.gpg
+
+# Add Docker repository
+echo \
+  "deb [arch=$(dpkg --print-architecture) \
+  signed-by=/etc/apt/keyrings/docker.gpg] \
+  https://download.docker.com/linux/ubuntu \
+  $(lsb_release -cs) stable" \
+  | tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+apt-get update
+
+# Install pinned version — 29.6.1 is the vulnerable version
+apt-get install -y \
+    docker-ce=5:29.6.1-1~ubuntu.$(lsb_release -rs)~$(lsb_release -cs) \
+    docker-ce-cli=5:29.6.1-1~ubuntu.$(lsb_release -rs)~$(lsb_release -cs) \
+    containerd.io
+
+# Pin the version so apt-get upgrade doesn't patch it
+apt-mark hold docker-ce docker-ce-cli containerd.io
+
+# docker and site setup
 git pull https://github.com/kalios5/Ethical-Hacking-Mod.git
 cd Ethical-Hacking-Mod/
 sudo chmod +x Scripts/DockerEscapeScripts/HostScripts/CronScript.sh # Allow execution of app log pull cron job script
