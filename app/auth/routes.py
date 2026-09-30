@@ -1,4 +1,6 @@
 import re
+import secrets
+import time
 from functools import wraps
 
 from datetime import datetime
@@ -7,6 +9,7 @@ from flask import abort, current_app, flash, redirect, render_template, request,
 from app import db
 from app.auth import bp
 from app.Database.auth import authenticate
+from app.Database.security import validate_password_strength
 from app.logging.db_audit import actions, audit
 from app.Database.models import User, Plugin
 from app.pluginmanager.security_plugins.temp_lockout import is_locked_out, record_failed_attempt, seconds_remaining, reset_on_success
@@ -22,9 +25,57 @@ def _feature_enabled(name):
     return toggle.enabled if toggle else True
 
 
+def _current_session_expiry_seconds():
+    return current_app.config.get("SESSION_ABSOLUTE_TIMEOUT_SECONDS", 12 * 60 * 60)
+
+
+def _current_idle_timeout_seconds():
+    return current_app.config.get("SESSION_IDLE_TIMEOUT_SECONDS", 15 * 60)
+
+
+def _touch_session():
+    now = int(time.time())
+    session["last_activity"] = now
+    session.modified = True
+
+
+def _clear_expired_session():
+    now = int(time.time())
+    if "user_id" not in session:
+        return False
+    last_activity = session.get("last_activity")
+    absolute_expiry = session.get("session_expires_at")
+    if last_activity is None or absolute_expiry is None:
+        session.clear()
+        return False
+    try:
+        last_activity = int(last_activity)
+        absolute_expiry = int(absolute_expiry)
+    except (TypeError, ValueError):
+        session.clear()
+        return False
+    if now - last_activity > _current_idle_timeout_seconds():
+        session.clear()
+        return False
+    if now >= absolute_expiry:
+        session.clear()
+        return False
+    return True
+
+
 def current_user():
+    if not _clear_expired_session():
+        return None
     user_id = session.get("user_id")
-    return db.session.get(User, user_id) if user_id else None
+    user = db.session.get(User, user_id) if user_id else None
+    if user is None:
+        session.clear()
+        return None
+    if not user.is_active:
+        session.clear()
+        return None
+    _touch_session()
+    return user
 
 
 def _is_safe_redirect_target(target):
@@ -45,6 +96,7 @@ def login_required(view):
     @wraps(view)
     def wrapped(*args, **kwargs):
         if current_user() is None:
+            session.clear()
             flash("Please sign in to continue.", "notice")
             return redirect(url_for("auth.login", next=request.path))
         return view(*args, **kwargs)
@@ -126,11 +178,16 @@ def login():
                       detail="password ok, awaiting 2FA")
                 return redirect(url_for("auth.two_factor"))
 
-            # session.clear() must run BEFORE any flash() calls for this
-            # login - flash() stores messages inside the session, and
-            # clear() wipes anything flashed before it runs.
+            # Rotate the session ID after login so a fixed session cookie cannot
+            # be reused across a successful authentication. Clearing the session
+            # also drops any stale flash data before we set the new user state.
             session.clear()
+            now = int(time.time())
+            session["session_id"] = secrets.token_urlsafe(32)
             session["user_id"] = user.id
+            session["last_activity"] = now
+            session["session_expires_at"] = now + _current_session_expiry_seconds()
+            session.permanent = True
             reset_on_success(user)
             login_captcha.reset_on_success(ip)
 
@@ -186,7 +243,12 @@ def two_factor():
             ip = session.get("pending_2fa_ip")
             check_time_raw = session.get("pending_2fa_check_time")
             session.clear()
+            now = int(time.time())
+            session["session_id"] = secrets.token_urlsafe(32)
             session["user_id"] = user.id
+            session["last_activity"] = now
+            session["session_expires_at"] = now + _current_session_expiry_seconds()
+            session.permanent = True
             audit(actions.TWOFA_SUCCESS, actor=user, ip=ip,
                   target_type="user", target_id=user.id, success=True, detail="2FA verified, login complete")
             new_device_enabled = _feature_enabled("new_device_alert")
@@ -213,10 +275,13 @@ def register():
         username = request.form.get("username", "").strip()
         email = request.form.get("email", "").strip()
         password = request.form.get("password", "")
-        if not username or not email or len(password) < 8:
-            flash("Use a username, email, and password of at least 8 characters.", "error")
+        policy_error = validate_password_strength(password, username=username, email=email)
+        if not username or not email:
+            flash("Use a username and an email address.", "error")
+        elif policy_error:
+            flash(policy_error, "error")
         elif User.query.filter_by(username=username).first():
-            flash("That username is already in use.", "error")
+            flash("Account creation failed. Please review your details and try again.", "error")
         else:
             user = User(username=username, email=email, role="customer", hash_mode="secure")
             user.set_password(password, "secure")
@@ -238,9 +303,11 @@ def account():
         if not email:
             flash("Email cannot be empty.", "error")
         else:
-            if password and len(password) < 8:
-                flash("A new password must have at least 8 characters.", "error")
-                return render_template("auth/account.html", user=user)
+            if password:
+                policy_error = validate_password_strength(password, username=user.username, email=user.email)
+                if policy_error:
+                    flash(policy_error, "error")
+                    return render_template("auth/account.html", user=user)
             if avatar and avatar.filename:
                 error = save_avatar(user, avatar)
                 if error:
