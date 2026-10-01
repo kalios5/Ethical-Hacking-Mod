@@ -129,7 +129,6 @@ def plugins():
 @admin_required
 @limiter.limit("5 per minute")
 def zip_import():
-    shop = current_shop()
     name = request.form.get("name", "").strip().lower()
     file = request.files.get("file")
 
