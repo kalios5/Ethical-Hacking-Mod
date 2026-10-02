@@ -55,7 +55,10 @@ class BaseConfig:
     PERMANENT_SESSION_LIFETIME = timedelta(minutes=15)
     SESSION_IDLE_TIMEOUT_SECONDS = 15 * 60
     SESSION_ABSOLUTE_TIMEOUT_SECONDS = 12 * 60 * 60
-
+    SESSION_COOKIE_SECURE   = True    # back to True — HTTPS is now in place
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    WTF_CSRF_SSL_STRICT     = False 
 
 class TestPostgresConfig(BaseConfig):
     DEBUG = True
