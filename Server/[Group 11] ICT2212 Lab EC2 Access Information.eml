@@ -1,0 +1,380 @@
+Received: from TY2PPF11F924EC9.apcprd01.prod.exchangelabs.com (::1) by
+ TYSPR01MB5517.apcprd01.prod.exchangelabs.com with HTTPS; Thu, 3 Sep 2026
+ 01:31:42 +0000
+Received: from TYZPR01MB7075.apcprd01.prod.exchangelabs.com
+ (2603:1096:405:16c::10) by TY2PPF11F924EC9.apcprd01.prod.exchangelabs.com
+ (2603:1096:408::387) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.21.360.13; Thu, 3 Sep
+ 2026 01:31:41 +0000
+Received: from TYZPR01MB7075.apcprd01.prod.exchangelabs.com
+ ([fe80::70a8:cda1:4e40:aea3]) by TYZPR01MB7075.apcprd01.prod.exchangelabs.com
+ ([fe80::70a8:cda1:4e40:aea3%5]) with mapi id 15.21.0360.008; Thu, 3 Sep 2026
+ 01:31:41 +0000
+From: "William Tan Wei Yong (Chen Weirong)" <william.tan@singaporetech.edu.sg>
+To: CHUNG HAE HUA GILLTON <2500991@sit.singaporetech.edu.sg>, KOO HAO MING
+	<2500331@sit.singaporetech.edu.sg>, YEE SHENG CHUA
+	<2503566@sit.singaporetech.edu.sg>, Wong En Xu Elijah
+	<2570295@sit.singaporetech.edu.sg>, Asher Lee Bing Xuan
+	<2570258@sit.singaporetech.edu.sg>, HTUN NAING WIN
+	<2502876@sit.singaporetech.edu.sg>
+CC: Vivek Balachandran <vivek.b@singaporetech.edu.sg>, Guo Huaqun
+	<huaqun.guo@singaporetech.edu.sg>, Myat Htike Ko
+	<Myat.HtikeKo@Singaporetech.edu.sg>
+Subject: [Group 11] ICT2212 Lab EC2 Access Information
+Thread-Topic: [Group 11] ICT2212 Lab EC2 Access Information
+Thread-Index: Ad06wE2pNU2XFwz2Tk6+N2gcCXKp4Q==
+Date: Thu, 3 Sep 2026 01:31:41 +0000
+Message-ID:
+	<TYZPR01MB7075B71D47CDB84F89497EB1D4B62@TYZPR01MB7075.apcprd01.prod.exchangelabs.com>
+Accept-Language: en-US
+Content-Language: en-US
+X-MS-Exchange-Organization-AuthAs: Internal
+X-MS-Exchange-Organization-AuthMechanism: 04
+X-MS-Exchange-Organization-AuthSource:
+	TYZPR01MB7075.apcprd01.prod.exchangelabs.com
+X-MS-Has-Attach: yes
+X-MS-Exchange-Organization-Network-Message-Id:
+	7578674d-bf8f-4cf6-8dc9-08df095b1b14
+X-MS-Exchange-Organization-SCL: 1
+X-MS-TNEF-Correlator:
+X-MS-Exchange-Organization-RecordReviewCfmType: 0
+msip_labels:
+	MSIP_Label_7766c061-8e16-473d-8aec-8fc5553e8a9b_Enabled=True;MSIP_Label_7766c061-8e16-473d-8aec-8fc5553e8a9b_SiteId=64991f7f-44d6-4d8c-9cd4-7862e8cb94c6;MSIP_Label_7766c061-8e16-473d-8aec-8fc5553e8a9b_SetDate=2026-09-02T09:50:48.0000000Z;MSIP_Label_7766c061-8e16-473d-8aec-8fc5553e8a9b_Name=SIT
+ Internal;MSIP_Label_7766c061-8e16-473d-8aec-8fc5553e8a9b_ContentBits=3;MSIP_Label_7766c061-8e16-473d-8aec-8fc5553e8a9b_Method=Privileged
+x-ms-publictraffictype: Email
+X-Microsoft-Antispam-Mailbox-Delivery:
+	ucf:0;jmr:0;auth:0;dest:I;ENG:(910005)(944506478)(944626604)(920097)(425001)(930201)(20251009189)(140003);
+X-Microsoft-Antispam-Message-Info:
+	ivJv1f8bkYQ0zBeau4vm2upHV11ZJ7SvoLGIK4RQFCC4SXdA9tvx7SpJzUqFCXDN0RrGwnA5JMeYcPAbiPEPCfEGwBrOq5yUz2y74nsz/RITf952oMioCH5DoYau45JNEnFV7g5c8fvL0hwHbIE4rKI3e7DZ0wff1MvGWOVGxu5zL7NhPTdu1y3giZ1M93Zr6sD3MxnhQswyDP6yylzq9h2rQfTkSImPdAQ8iaSjG8oahnWRVGlNFyxOu+JDiWXRW12sw5D7ikrnO+q8f/ulxJHIzB/bfWjdxcKbmqBi61uGeG8IdoiVv5uZ7qf4+AC/8iJKJHF8d3WfOuC9Iu68rgSN4lGkov0T/sT7mOein/coiQm2QerYjai3ziBlAdWQQijLIDbNU3LvuLBkEaJVhnShP9ZsNUtyWK6CsM/09DeMPen27bJ0RwkEONyYEJbpR3CRecSjWDWNWXOdTiGdQmNHAYE7gVfPAhw/ncGc6u2sNkfTy0JOSMtbeS8LBONy3ZdcfmwIVJxg9fBwfeJAyk2n8/MvXxPJGnDiNDDw6ZP5eKNFXzbstgJEbXW/rJUVBbyEaxDNzxsTREpGrzvky9WJRlvzCz288fba2ka9bvtlfEeTYAAJ90fIjaHTFlHQ4R9M5hyIYh1DC8GS5UFWT9BL1CBwgGHBtvWxj7kvmQ4XWXsXH2/IQmvSubnYNCGezvIuZj2dx+pO9QW+6wgnRsTBTnolJkJS43acMqdRbUXrujK1QqpFC8LDezAMX4v7a16touBA27p6BGK5myOJmQ==
+Content-Type: multipart/mixed;
+	boundary="_006_TYZPR01MB7075B71D47CDB84F89497EB1D4B62TYZPR01MB7075apcp_"
+MIME-Version: 1.0
+
+--_006_TYZPR01MB7075B71D47CDB84F89497EB1D4B62TYZPR01MB7075apcp_
+Content-Type: multipart/related;
+	boundary="_005_TYZPR01MB7075B71D47CDB84F89497EB1D4B62TYZPR01MB7075apcp_";
+	type="multipart/alternative"
+
+--_005_TYZPR01MB7075B71D47CDB84F89497EB1D4B62TYZPR01MB7075apcp_
+Content-Type: multipart/alternative;
+	boundary="_000_TYZPR01MB7075B71D47CDB84F89497EB1D4B62TYZPR01MB7075apcp_"
+
+--_000_TYZPR01MB7075B71D47CDB84F89497EB1D4B62TYZPR01MB7075apcp_
+Content-Type: text/plain; charset="us-ascii"
+
+SIT Internal
+
+Greetings Students of Group 11,
+
+Please find the following information for your assigned AWS EC2:
+Access IP: 13.59.88.187
+Username: student11
+Key (attached): ICT2212-AY26-T1-student11.pem
+
+If you are using putty to access the EC2, please first convert the key to .ppk format before using it with putty.
+You may find the instructions and download link here:
+
+  1.  Convert Pem to Ppk File Using PuTTYgen<https://www.puttygen.com/convert-pem-to-ppk#Converting_Pem_to_Ppk_on_Windows>
+  2.  Download Putty for Windows, Linux and Mac - Install SSH in PuTTY (puttygen.com)<https://www.puttygen.com/download-putty>
+
+Or you may use the following windows command (for latest WinOS) to access the EC2:
+ssh -i "C:\<Directory-to-key>\ICT2212-AY26-T1-student11.pem" student11@13.59.88.187
+Note: Ensure the pem file access permission is allowable by your own windows account only.
+
+If there is any issue with the EC2, you may contact us at the following email or through MSTeams with up to 1-2 Working Days:
+
+  1.  William - William.tan@singaporetech.edu.sg<mailto:William.tan@singaporetech.edu.sg>
+  2.  Myat - Myat.HtikeKo@Singaporetech.edu.sg<mailto:Myat.HtikeKo@Singaporetech.edu.sg>
+
+TO READ AND NOTE:
+1. Always remember to back up your files and config. The EC2 will be reset if there is no way of recovering and all the files will be lost.
+2. Always test any major config changes or firewall changes on a locally hosted VM first.
+3. Always remember to add TCP 22 (or any other port) for your SSH connection when configuring your EC2 firewall rules (ufw.rules).
+4. Always remember to include your Module name and AWS EC2 Username when contacting us.
+5. ONLY circulate or share your access IP, username and key file within your group members unless instructed otherwise.
+
+
+--_000_TYZPR01MB7075B71D47CDB84F89497EB1D4B62TYZPR01MB7075apcp_
+Content-Type: text/html; charset="us-ascii"
+
+<html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns:dt="uuid:C2F41010-65B3-11d1-A29F-00AA00C14882" xmlns:m="http://schemas.microsoft.com/office/2004/12/omml" xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta name="Generator" content="Microsoft Word 15 (filtered medium)">
+<style><!--
+/* Font Definitions */
+@font-face
+	{font-family:"Cambria Math";
+	panose-1:2 4 5 3 5 4 6 3 2 4;}
+@font-face
+	{font-family:Calibri;
+	panose-1:2 15 5 2 2 2 4 3 2 4;}
+@font-face
+	{font-family:Aptos;}
+/* Style Definitions */
+p.MsoNormal, li.MsoNormal, div.MsoNormal
+	{margin:0cm;
+	font-size:11.0pt;
+	font-family:"Calibri",sans-serif;
+	mso-ligatures:standardcontextual;
+	mso-fareast-language:EN-US;}
+a:link, span.MsoHyperlink
+	{mso-style-priority:99;
+	color:#0563C1;
+	text-decoration:underline;}
+p.MsoListParagraph, li.MsoListParagraph, div.MsoListParagraph
+	{mso-style-priority:34;
+	margin-top:0cm;
+	margin-right:0cm;
+	margin-bottom:0cm;
+	margin-left:36.0pt;
+	font-size:11.0pt;
+	font-family:"Calibri",sans-serif;
+	mso-ligatures:standardcontextual;
+	mso-fareast-language:EN-US;}
+span.EmailStyle19
+	{mso-style-type:personal-compose;}
+.MsoChpDefault
+	{mso-style-type:export-only;
+	font-size:10.0pt;
+	mso-ligatures:none;
+	mso-fareast-language:EN-US;}
+@page WordSection1
+	{size:595.3pt 841.9pt;
+	margin:72.0pt 72.0pt 72.0pt 72.0pt;}
+div.WordSection1
+	{page:WordSection1;}
+/* List Definitions */
+@list l0
+	{mso-list-id:898442845;
+	mso-list-type:hybrid;
+	mso-list-template-ids:1132227516 -1 -1 -1 -1 -1 -1 -1 -1 -1;}
+@list l0:level1
+	{mso-level-tab-stop:none;
+	mso-level-number-position:left;
+	text-indent:-18.0pt;}
+@list l0:level2
+	{mso-level-number-format:alpha-lower;
+	mso-level-tab-stop:none;
+	mso-level-number-position:left;
+	text-indent:-18.0pt;}
+@list l0:level3
+	{mso-level-number-format:roman-lower;
+	mso-level-tab-stop:none;
+	mso-level-number-position:right;
+	text-indent:-9.0pt;}
+@list l0:level4
+	{mso-level-tab-stop:none;
+	mso-level-number-position:left;
+	text-indent:-18.0pt;}
+@list l0:level5
+	{mso-level-number-format:alpha-lower;
+	mso-level-tab-stop:none;
+	mso-level-number-position:left;
+	text-indent:-18.0pt;}
+@list l0:level6
+	{mso-level-number-format:roman-lower;
+	mso-level-tab-stop:none;
+	mso-level-number-position:right;
+	text-indent:-9.0pt;}
+@list l0:level7
+	{mso-level-tab-stop:none;
+	mso-level-number-position:left;
+	text-indent:-18.0pt;}
+@list l0:level8
+	{mso-level-number-format:alpha-lower;
+	mso-level-tab-stop:none;
+	mso-level-number-position:left;
+	text-indent:-18.0pt;}
+@list l0:level9
+	{mso-level-number-format:roman-lower;
+	mso-level-tab-stop:none;
+	mso-level-number-position:right;
+	text-indent:-9.0pt;}
+@list l1
+	{mso-list-id:957028756;
+	mso-list-type:hybrid;
+	mso-list-template-ids:1132227516 1208549391 1208549401 1208549403 1208549391 1208549401 1208549403 1208549391 1208549401 1208549403;}
+@list l1:level1
+	{mso-level-tab-stop:none;
+	mso-level-number-position:left;
+	text-indent:-18.0pt;}
+@list l1:level2
+	{mso-level-number-format:alpha-lower;
+	mso-level-tab-stop:none;
+	mso-level-number-position:left;
+	text-indent:-18.0pt;}
+@list l1:level3
+	{mso-level-number-format:roman-lower;
+	mso-level-tab-stop:none;
+	mso-level-number-position:right;
+	text-indent:-9.0pt;}
+@list l1:level4
+	{mso-level-tab-stop:none;
+	mso-level-number-position:left;
+	text-indent:-18.0pt;}
+@list l1:level5
+	{mso-level-number-format:alpha-lower;
+	mso-level-tab-stop:none;
+	mso-level-number-position:left;
+	text-indent:-18.0pt;}
+@list l1:level6
+	{mso-level-number-format:roman-lower;
+	mso-level-tab-stop:none;
+	mso-level-number-position:right;
+	text-indent:-9.0pt;}
+@list l1:level7
+	{mso-level-tab-stop:none;
+	mso-level-number-position:left;
+	text-indent:-18.0pt;}
+@list l1:level8
+	{mso-level-number-format:alpha-lower;
+	mso-level-tab-stop:none;
+	mso-level-number-position:left;
+	text-indent:-18.0pt;}
+@list l1:level9
+	{mso-level-number-format:roman-lower;
+	mso-level-tab-stop:none;
+	mso-level-number-position:right;
+	text-indent:-9.0pt;}
+ol
+	{margin-bottom:0cm;}
+ul
+	{margin-bottom:0cm;}
+--></style><!--[if gte mso 9]><xml>
+<o:shapedefaults v:ext="edit" spidmax="1026" />
+</xml><![endif]--><!--[if gte mso 9]><xml>
+<o:shapelayout v:ext="edit">
+<o:idmap v:ext="edit" data="1" />
+</o:shapelayout></xml><![endif]-->
+</head>
+<body lang="EN-SG" link="#0563C1" vlink="#96607D" style="word-wrap:break-word">
+<p style="font-family:Calibri;font-size:12pt;color:#000000;margin:5pt;font-style:normal;font-weight:normal;text-decoration:none;" align="Center">
+SIT Internal<br>
+</p>
+<br>
+<div>
+<div class="WordSection1">
+<p class="MsoNormal"><span lang="EN-US">Greetings </span><span lang="EN-US">Students</span><span lang="EN-US"> of Group
+</span><span lang="EN-US">11</span><span lang="EN-US">,<o:p></o:p></span></p>
+<p class="MsoNormal"><span lang="EN-US"><o:p>&nbsp;</o:p></span></p>
+<p class="MsoNormal"><span lang="EN-US">Please find the following information for your assigned AWS EC2:<o:p></o:p></span></p>
+<p class="MsoNormal"><span lang="EN-US">Access IP: </span><b><u><span lang="EN-US">13.59.88.187</span></u></b><b><u><span lang="EN-US"><o:p></o:p></span></u></b></p>
+<p class="MsoNormal"><span lang="EN-US">Username: </span><b><u><span lang="EN-US">student11</span></u></b><b><u><span lang="EN-US"><o:p></o:p></span></u></b></p>
+<p class="MsoNormal"><span lang="EN-US">Key (attached): </span><b><u><span lang="EN-US">ICT2212-AY26-T1-student11.pem</span></u></b><b><u><span lang="EN-US"><o:p></o:p></span></u></b></p>
+<p class="MsoNormal"><b><u><span lang="EN-US"><o:p><span style="text-decoration:none">&nbsp;</span></o:p></span></u></b></p>
+<p class="MsoNormal"><span lang="EN-US">If you are using putty to access the EC2, please first convert the key to .ppk format before using it with putty.<o:p></o:p></span></p>
+<p class="MsoNormal"><span lang="EN-US">You may find the instructions and download link here:<o:p></o:p></span></p>
+<ol style="margin-top:0cm" start="1" type="1">
+<li class="MsoListParagraph" style="margin-left:0cm;mso-list:l1 level1 lfo2"><a href="https://www.puttygen.com/convert-pem-to-ppk#Converting_Pem_to_Ppk_on_Windows">Convert Pem to Ppk File Using PuTTYgen</a><o:p></o:p></li><li class="MsoListParagraph" style="margin-left:0cm;mso-list:l1 level1 lfo2"><a href="https://www.puttygen.com/download-putty">Download Putty for Windows, Linux and Mac - Install SSH in PuTTY (puttygen.com)</a><span lang="EN-US"><o:p></o:p></span></li></ol>
+<p class="MsoNormal"><span lang="EN-US"><o:p>&nbsp;</o:p></span></p>
+<p class="MsoNormal"><span lang="EN-US">Or you may use the following windows command (for latest WinOS) to access the EC2:<o:p></o:p></span></p>
+<p class="MsoNormal" style="background:#F2F2F2"><b><span lang="EN-US" style="font-size:10.0pt;font-family:&quot;Courier New&quot;;color:black">ssh -i &#8220;C:\&lt;Directory-to-key&gt;\</span></b><b><span lang="EN-US" style="font-size:10.0pt;font-family:&quot;Courier New&quot;;color:black">ICT2212-AY26-T1-student11.pem</span></b><b><span lang="EN-US" style="font-size:10.0pt;font-family:&quot;Courier New&quot;;color:black">&#8221;
+</span></b><b><span lang="EN-US" style="font-size:10.0pt;font-family:&quot;Courier New&quot;;color:black">student11</span></b><b><span lang="EN-US" style="font-size:10.0pt;font-family:&quot;Courier New&quot;;color:black">@</span></b><b><span lang="EN-US" style="font-size:10.0pt;font-family:&quot;Courier New&quot;;color:black">13.59.88.187</span></b><b><span lang="EN-US" style="font-size:10.0pt;font-family:&quot;Courier New&quot;"><o:p></o:p></span></b></p>
+<p class="MsoNormal"><span lang="EN-US">Note: Ensure the pem file access permission is allowable by your own windows account only.<o:p></o:p></span></p>
+<p class="MsoNormal"><span lang="EN-US"><o:p>&nbsp;</o:p></span></p>
+<p class="MsoNormal"><span lang="EN-US">If there is any issue with the EC2, you may contact us at the following email or through MSTeams with up to
+<u>1-2</u> Working Days:<o:p></o:p></span></p>
+<ol style="margin-top:0cm" start="1" type="1">
+<li class="MsoListParagraph" style="margin-left:0cm;mso-list:l0 level1 lfo4"><span lang="EN-US">William &#8211;
+</span><a href="mailto:William.tan@singaporetech.edu.sg"><span lang="EN-US">William.tan@singaporetech.edu.sg</span></a><span lang="EN-US"><o:p></o:p></span></li><li class="MsoListParagraph" style="margin-left:0cm;mso-list:l0 level1 lfo4"><span lang="EN-US">Myat &#8211;
+</span><a href="mailto:Myat.HtikeKo@Singaporetech.edu.sg"><span lang="EN-US">Myat.HtikeKo@Singaporetech.edu.sg</span></a><o:p></o:p></li></ol>
+<p class="MsoNormal"><span lang="EN-US"><o:p>&nbsp;</o:p></span></p>
+<p class="MsoNormal"><b><i><u><span lang="EN-US" style="color:red">TO READ AND NOTE:
+<o:p></o:p></span></u></i></b></p>
+<p class="MsoNormal"><b><i><span lang="EN-US" style="color:red">1. Always remember to back up your files and config. The EC2 will be reset if there is no way of recovering and all the files will be lost.<o:p></o:p></span></i></b></p>
+<p class="MsoNormal"><b><i><span lang="EN-US" style="color:red">2. Always test any major config changes or firewall changes on
+<u>a locally hosted VM</u> first.<o:p></o:p></span></i></b></p>
+<p class="MsoNormal"><b><i><span lang="EN-US" style="color:red">3. Always remember to add TCP 22 (or any other port) for your SSH connection when configuring your EC2 firewall rules (ufw.rules).<o:p></o:p></span></i></b></p>
+<p class="MsoNormal"><b><i><span lang="EN-US" style="color:red">4. Always remember to include your Module name and AWS EC2 Username when contacting us.<o:p></o:p></span></i></b></p>
+<p class="MsoNormal"><b><i><span lang="EN-US" style="color:red">5. <u>ONLY</u> circulate or share your access IP, username and key file within your group members unless instructed otherwise.<o:p></o:p></span></i></b></p>
+<p class="MsoNormal"><o:p>&nbsp;</o:p></p>
+</div>
+</div>
+</body>
+</html>
+
+--_000_TYZPR01MB7075B71D47CDB84F89497EB1D4B62TYZPR01MB7075apcp_--
+
+--_005_TYZPR01MB7075B71D47CDB84F89497EB1D4B62TYZPR01MB7075apcp_
+Content-Type: text/html; name="header.htm"
+Content-Description: header.htm
+Content-Disposition: inline; filename="header.htm"; size=1919;
+	creation-date="Thu, 03 Sep 2026 01:31:40 GMT";
+	modification-date="Thu, 03 Sep 2026 01:31:42 GMT"
+Content-ID: <header.htm@01DD3B03.5BE07400>
+Content-Transfer-Encoding: base64
+
+PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
+bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
+YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6bT0iaHR0cDovL3NjaGVtYXMubWlj
+cm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcv
+VFIvUkVDLWh0bWw0MCI+DQoNCjxoZWFkPg0KPG1ldGEgaHR0cC1lcXVpdj1Db250ZW50LVR5cGUg
+Y29udGVudD0idGV4dC9odG1sOyBjaGFyc2V0PXdpbmRvd3MtMTI1MiI+DQo8bWV0YSBuYW1lPVBy
+b2dJZCBjb250ZW50PVdvcmQuRG9jdW1lbnQ+DQo8bWV0YSBuYW1lPUdlbmVyYXRvciBjb250ZW50
+PSJNaWNyb3NvZnQgV29yZCAxNSI+DQo8bWV0YSBuYW1lPU9yaWdpbmF0b3IgY29udGVudD0iTWlj
+cm9zb2Z0IFdvcmQgMTUiPg0KPGxpbmsgaWQ9TWFpbi1GaWxlIHJlbD1NYWluLUZpbGUgaHJlZj0i
+Y2lkOi5odG1AMDFERDNCMDMuNUJFMDc0MDAiPg0KPCEtLVtpZiBndGUgbXNvIDldPjx4bWw+DQog
+PG86c2hhcGVkZWZhdWx0cyB2OmV4dD0iZWRpdCIgc3BpZG1heD0iMjA1MCIgLz4NCjwveG1sPjwh
+W2VuZGlmXS0tPg0KPC9oZWFkPg0KDQo8Ym9keSBsYW5nPUVOLVNHIGxpbms9IiMwNTYzQzEiIHZs
+aW5rPSIjOTU0RjcyIj4NCg0KPGRpdiBzdHlsZT0nbXNvLWVsZW1lbnQ6Zm9vdG5vdGUtc2VwYXJh
+dG9yJyBpZD1mcz4NCg0KPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIHN0eWxlPSdtc28tc3BlY2lh
+bC1jaGFyYWN0ZXI6Zm9vdG5vdGUtc2VwYXJhdG9yJz48IVtpZiAhc3VwcG9ydEZvb3Rub3Rlc10+
+DQoNCjxociBhbGlnbj1sZWZ0IHNpemU9MSB3aWR0aD0iMzMlIj4NCg0KPCFbZW5kaWZdPjwvc3Bh
+bj48L3A+DQoNCjwvZGl2Pg0KDQo8ZGl2IHN0eWxlPSdtc28tZWxlbWVudDpmb290bm90ZS1jb250
+aW51YXRpb24tc2VwYXJhdG9yJyBpZD1mY3M+DQoNCjxwIGNsYXNzPU1zb05vcm1hbD48c3BhbiBz
+dHlsZT0nbXNvLXNwZWNpYWwtY2hhcmFjdGVyOmZvb3Rub3RlLWNvbnRpbnVhdGlvbi1zZXBhcmF0
+b3InPjwhW2lmICFzdXBwb3J0Rm9vdG5vdGVzXT4NCg0KPGhyIGFsaWduPWxlZnQgc2l6ZT0xPg0K
+DQo8IVtlbmRpZl0+PC9zcGFuPjwvcD4NCg0KPC9kaXY+DQoNCjxkaXYgc3R5bGU9J21zby1lbGVt
+ZW50OmVuZG5vdGUtc2VwYXJhdG9yJyBpZD1lcz4NCg0KPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFu
+IHN0eWxlPSdtc28tc3BlY2lhbC1jaGFyYWN0ZXI6Zm9vdG5vdGUtc2VwYXJhdG9yJz48IVtpZiAh
+c3VwcG9ydEZvb3Rub3Rlc10+DQoNCjxociBhbGlnbj1sZWZ0IHNpemU9MSB3aWR0aD0iMzMlIj4N
+Cg0KPCFbZW5kaWZdPjwvc3Bhbj48L3A+DQoNCjwvZGl2Pg0KDQo8ZGl2IHN0eWxlPSdtc28tZWxl
+bWVudDplbmRub3RlLWNvbnRpbnVhdGlvbi1zZXBhcmF0b3InIGlkPWVjcz4NCg0KPHAgY2xhc3M9
+TXNvTm9ybWFsPjxzcGFuIHN0eWxlPSdtc28tc3BlY2lhbC1jaGFyYWN0ZXI6Zm9vdG5vdGUtY29u
+dGludWF0aW9uLXNlcGFyYXRvcic+PCFbaWYgIXN1cHBvcnRGb290bm90ZXNdPg0KDQo8aHIgYWxp
+Z249bGVmdCBzaXplPTE+DQoNCjwhW2VuZGlmXT48L3NwYW4+PC9wPg0KDQo8L2Rpdj4NCg0KPC9i
+b2R5Pg0KDQo8L2h0bWw+DQo=
+
+--_005_TYZPR01MB7075B71D47CDB84F89497EB1D4B62TYZPR01MB7075apcp_--
+
+--_006_TYZPR01MB7075B71D47CDB84F89497EB1D4B62TYZPR01MB7075apcp_
+Content-Type: application/octet-stream; name="ICT2212-AY26-T1-student11.pem"
+Content-Description: ICT2212-AY26-T1-student11.pem
+Content-Disposition: attachment; filename="ICT2212-AY26-T1-student11.pem";
+	size=7558; creation-date="Tue, 01 Sep 2026 09:50:44 GMT";
+	modification-date="Thu, 03 Sep 2026 01:31:42 GMT"
+Content-Transfer-Encoding: base64
+
+LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcEFJQkFBS0NBUUVBd0dZelRPUWpM
+ajJmSUU4ODFTMTZHbGpmdU5PTnpEMXFNY0JRWThSV0crbVJPUEpaClp1SnNZcnRBYUZYVllMbEsz
+ek14RU45dmVrcTl6U2Zrb1IvM2pzQ1JXWnNGVXZhZGE4amxTWURidi9IMTRxY1UKQy9QT2UwTlRp
+RmhjUlozYTdjN3lqNU9qQXExU3B4ZzVkRGUwUFQ4MWRJNzNZOTg1aWtnd0lTTnd2RERTNXIyQgp2
+SS8veFZKNjU2dUgzcVo4V1o1UExpdEdMMHJrVzhiTVdxN2NFKzdydDhhM2NWUjd6VjRoc0hXa2xB
+b1dTb3RuCmhQK2QzVU1NV0hyNTIzSmV5UXNSak1ON3RmTzdjeUVaVkZwTTFmUHNrYTVjeWhVdFBG
+cVEySEdLV0VWaVU4R0QKeC81cDN1NjhMSXhSMjEranVndmJUREtFbTFuY3hqUG91bzdPb3dJREFR
+QUJBb0lCQVFDT0FlRVRlNy9MdllmWgozU0pWWmorZGVzT0dNLytSSkROaGpVVElubjNBRkdFdjJ4
+REpzNDIwUWVtRUdQWnBjZG9sYkM5bStNUGJTNWRUCitZSHl1eG1Kci9DWVpxZERXT3RRUnZPVmtS
+cWhUZ0hpek5jckMwVDREZlYxeVdJeHNCV0xPUmduaVJ6a09QR3MKaTJDOHV2QzUxQkdzZW1sMnVh
+aEt2SVZwc0RMaGN3NlZ2Q2MySkN2L2VLQTY2citvVGFwKzI5WVJOZVVSZkxYZAoySjd3TEcwYXpp
+U05LWEloNFdkUUs2Yis1RWNJbmQxK3pLTWtoTWZKTC9ISVcwdkdhQ2lCMDlxYW9rMXVwNzdNCnlt
+MEVoaXI3NjdtL0ZYNC9DejNyOThVUncwSmQ3cERvZnhLejFvNFl0RWdlMEpEZHBrby8zSGkyVFo0
+c25BWlcKOUM2U2JMRmhBb0dCQVBZeWFGdFFYb1NZM2xOMWs5QVBRdW95WU13YkhxMVNLaG9FNkI4
+VDFqbkpORTRsYnZwaApVRE55RTdVWDhCcFRzK3hFK2w3bDgraWpCUUR6TmZIcjFRY2RYbXphazdj
+K2V6bXQvUnJscjh0TG96NkE4eXU1Ci9oSWxmNXRaWGtINUVaTmJmR2JmRE4vb2p3Z2VQYkxML25Y
+ZjIxdXZyZGpnbGhVMFVuNkI0UXNYQW9HQkFNZ1AKYU5VZTJCSnVFejRrUE1yK2x1USt0R1RMKy9J
+dUlpdDR1ajJLaHhxMDhHNWpseVRzTGZyVGp3ODBaUlBOOUVtVQo1SE9WWHkwL01vaXNlalVmbGFT
+QktpSHJsOFdQK24vczdxNFp0OUwzcVVraTlrU2UwNmZJMFFFQkhjMmEzNlZGCmRBYzlCVzJEeXd4
+Zy9adTBINU41ZnJkRm15WnFORHgrUGtiRkx1QlZBb0dBWndoVGVodVpZcjZqRktSNU5yS2MKVzJ5
+MzY5TlJ0RkZWZzB3WVpLRWxuMHRnRTNCQkVKSFhRYUIxTk8yT3MwWGlYM2ZDbkNKNlFCcXhSbU9D
+YVBzOApUTnp5bm5XZktpb0E0Zk81b0I4TndmT21uc3JTZWJNOTdCUTdZaVUxZUVDbkpWYzlLY1Fo
+SERlMFhENWpyY2NICmVBYzJReG16bExid3VIRU1NUnRqdGdNQ2dZRUFwbTk3YldJOXJBZDdac1ZL
+OWk0YlprTnNYRGIvb1prVHdFcXQKMWlqN0FSTHF1MHVMSUtLRUZob08rRDFFb2RkRGxqdVNXejQz
+Y2pNVFhYVHdMbVhhWG9NK2cvMjF4QnhsOENzeQozaEJ6UjhYV1Jnd2FDVGlCS1NMK0RmSFowNFUy
+N2czNzIxRyt4RDlTbXpmTmhNMnpQME5pVWlKTVV3Y2o4ZmVzCjQ3K0RvZ2tDZ1lBdEtWOEdYNnRL
+ZmFRQTIwZzRSWjRxQlVpSlJRNEt5eGFoZElFU2puVUkvTkZzcFU5cGZldGkKQ2ljblk3VEc1SEZS
+SWREbE9rUzZ0WGhIcnJuV3V4TGFHQlhhUjhyY09TVEwxS3JhbncyRGhsK3hja1d2MzJLNwp3MmZJ
+SHM1aUE1SHovY3RWSFZwZXpMQW0ySWJRMWl5eTF5L0tTaHE0clFzQXVPMEdwaGo2U1E9PQotLS0t
+LUVORCBSU0EgUFJJVkFURSBLRVktLS0tLQo=
+
+--_006_TYZPR01MB7075B71D47CDB84F89497EB1D4B62TYZPR01MB7075apcp_--
