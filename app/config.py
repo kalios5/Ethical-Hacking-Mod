@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -40,16 +41,35 @@ class BaseConfig:
     # request that renders it, in every environment.
     TEMPLATES_AUTO_RELOAD = True
 
+    # --- session cookie hardening (general, attack-safe) ------------------
+    # HttpOnly: JS can't read the session cookie (limits XSS session theft).
+    # SameSite=Lax: cookie not sent on cross-site POSTs (CSRF depth).
+    # Keep idle sessions brief and impose a hard absolute cap so a stolen
+    # session stays useful for only a short window even if the user never logs
+    # out.
+    # SESSION_COOKIE_SECURE is set per-environment below (needs HTTPS in prod,
+    # off for the plain-http dev/demo server).
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = "Lax"
+    SESSION_REFRESH_EACH_REQUEST = False
+    PERMANENT_SESSION_LIFETIME = timedelta(minutes=15)
+    SESSION_IDLE_TIMEOUT_SECONDS = 15 * 60
+    SESSION_ABSOLUTE_TIMEOUT_SECONDS = 12 * 60 * 60
+
 
 class TestPostgresConfig(BaseConfig):
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = f"sqlite:///{BaseConfig.BASEDIR / 'app.db'}"
     TESTING = True
+    SESSION_COOKIE_SECURE = False   # dev/demo runs over plain http
+    CSP_REPORT_ONLY = True          # report violations, block nothing during demo
 
 
 class ProductionConfig(BaseConfig):
     DEBUG = False
     TESTING = False
+    SESSION_COOKIE_SECURE = True    # requires HTTPS (TLS terminator / reverse proxy)
+    CSP_REPORT_ONLY = False         # enforce the policy in production
     DB_USERNAME = os.environ.get("DB_USERNAME")
     DB_PASSWORD = os.environ.get("DB_PASSWORD")
     DB_NAME = os.environ.get("DB_NAME")

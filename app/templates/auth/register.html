@@ -12,8 +12,9 @@
                 <input type="email" name="email" required>
             </label>
             <label>Password
-                <input type="password" name="password" minlength="8" required>
+                <input type="password" name="password" minlength="12" aria-describedby="password-requirements" required>
             </label>
+            <small class="muted" id="password-requirements">Use at least 12 characters, including lowercase and uppercase letters, a number, and a special character. Avoid common passwords and passwords same as your username or email.</small>
             <button class="button" type="submit">Create account</button>
             <p class="muted">Already registered? <a href="{{ url_for('auth.login') }}">Log in</a></p>
         </form>

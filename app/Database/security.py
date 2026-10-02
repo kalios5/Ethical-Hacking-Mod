@@ -16,6 +16,46 @@ import hashlib
 
 from werkzeug.security import check_password_hash, generate_password_hash
 
+_COMMON_PASSWORDS = {
+    "password", "password1", "password123", "welcome", "letmein", "qwerty",
+    "admin", "supersecret", "iloveyou", "football", "monkey", "dragon",
+    "abc123", "password12", "admin123", "changeme", "login", "secret",
+}
+
+
+def validate_password_strength(password: str, username: str | None = None, email: str | None = None) -> str | None:
+    """Return a human-readable error message or None when the password meets
+    the minimum strength rules for the app."""
+    if not isinstance(password, str):
+        return "Password must be a string."
+
+    candidate = password.strip()
+    norm = candidate.lower()
+    if username:
+        for variant in {username.lower(), username.lower().replace(" ", ""), username.lower().replace("_", "")}:
+            if variant and norm == variant:
+                return "Password must not match your username."
+    if email:
+        local = (email or "").split("@", 1)[0].lower()
+        if local and norm == local:
+            return "Password must not match your email address."
+
+    if len(candidate) < 12:
+        return "Password must be at least 12 characters long."
+    if not any(ch.islower() for ch in candidate):
+        return "Password must contain at least one lowercase letter."
+    if not any(ch.isupper() for ch in candidate):
+        return "Password must contain at least one uppercase letter."
+    if not any(ch.isdigit() for ch in candidate):
+        return "Password must contain at least one number."
+    if not any(not ch.isalnum() for ch in candidate):
+        return "Password must contain at least one special character."
+
+    if norm in _COMMON_PASSWORDS:
+        return "Password is too common; choose a more unique password."
+
+    return None
+
 
 def hash_password(plaintext: str, mode: str = "weak") -> str:
     if mode == "secure":
