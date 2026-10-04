@@ -1,0 +1,188 @@
+
+PLAY [Lab host setup and hardening] ********************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [192.168.10.42]
+
+TASK [Update apt cache] ********************************************************
+ok: [192.168.10.42]
+
+TASK [Upgrade all packages] ****************************************************
+ok: [192.168.10.42]
+
+TASK [Create admin user account] ***********************************************
+ok: [192.168.10.42]
+
+TASK [Add SSH public key for admin user] ***************************************
+ok: [192.168.10.42]
+
+TASK [Set correct permissions on admin .ssh directory] *************************
+ok: [192.168.10.42]
+
+TASK [Create SSH login banner] *************************************************
+ok: [192.168.10.42]
+
+TASK [Write SSH hardening config] **********************************************
+ok: [192.168.10.42]
+
+TASK [Validate SSH config before restarting] ***********************************
+ok: [192.168.10.42]
+
+TASK [Restart SSH daemon] ******************************************************
+changed: [192.168.10.42]
+
+TASK [Install UFW] *************************************************************
+ok: [192.168.10.42]
+
+TASK [Allow SSH before enabling firewall] **************************************
+ok: [192.168.10.42]
+
+TASK [Allow HTTP] **************************************************************
+ok: [192.168.10.42]
+
+TASK [Allow HTTPS] *************************************************************
+ok: [192.168.10.42]
+
+TASK [Set default incoming policy to deny] *************************************
+ok: [192.168.10.42]
+
+TASK [Set default outgoing policy to allow] ************************************
+ok: [192.168.10.42]
+
+TASK [Enable UFW] **************************************************************
+ok: [192.168.10.42]
+
+TASK [Install fail2ban] ********************************************************
+ok: [192.168.10.42]
+
+TASK [Write fail2ban SSH jail config] ******************************************
+ok: [192.168.10.42]
+
+TASK [Enable and start fail2ban] ***********************************************
+ok: [192.168.10.42]
+
+TASK [Write sudo hardening config] *********************************************
+ok: [192.168.10.42]
+
+TASK [Create sudo IO log directory] ********************************************
+ok: [192.168.10.42]
+
+TASK [Set system-wide umask to 027] ********************************************
+ok: [192.168.10.42]
+
+TASK [Set umask in root bashrc] ************************************************
+ok: [192.168.10.42]
+
+TASK [Set umask in admin user bashrc] ******************************************
+ok: [192.168.10.42]
+
+TASK [Ensure /root/.ssh exists] ************************************************
+ok: [192.168.10.42]
+
+TASK [Ensure authorized_keys exists] *******************************************
+ok: [192.168.10.42]
+
+TASK [Install Docker dependencies] *********************************************
+ok: [192.168.10.42]
+
+TASK [Create apt keyrings directory] *******************************************
+ok: [192.168.10.42]
+
+TASK [Add Docker GPG key] ******************************************************
+ok: [192.168.10.42]
+
+TASK [Add Docker apt repository] ***********************************************
+ok: [192.168.10.42]
+
+TASK [Update apt cache after adding Docker repo] *******************************
+changed: [192.168.10.42]
+
+TASK [Install Docker Engine pinned to 29.6.1] **********************************
+ok: [192.168.10.42]
+
+TASK [Pin Docker version — prevent upgrade patching the CVE] *******************
+ok: [192.168.10.42] => (item=docker-ce)
+ok: [192.168.10.42] => (item=docker-ce-cli)
+ok: [192.168.10.42] => (item=containerd.io)
+
+TASK [Ensure Docker is started and enabled] ************************************
+ok: [192.168.10.42]
+
+TASK [Create platform log directory] *******************************************
+ok: [192.168.10.42]
+
+TASK [Create collector log file] ***********************************************
+ok: [192.168.10.42]
+
+TASK [Copy collect_logs.sh to host] ********************************************
+changed: [192.168.10.42]
+
+TASK [Write host cron entry for log collection] ********************************
+changed: [192.168.10.42]
+
+TASK [Restart cron to pick up new entry] ***************************************
+changed: [192.168.10.42]
+
+TASK [Verify Docker version is 29.6.1] *****************************************
+ok: [192.168.10.42]
+
+TASK [Verify UFW is active] ****************************************************
+ok: [192.168.10.42]
+
+TASK [Verify fail2ban is running] **********************************************
+ok: [192.168.10.42]
+
+TASK [Verify SSH config is valid] **********************************************
+ok: [192.168.10.42]
+
+TASK [Verify collector script is executable] ***********************************
+ok: [192.168.10.42]
+
+TASK [Verify /root/.ssh/authorized_keys exists] ********************************
+ok: [192.168.10.42]
+
+TASK [Print verification summary] **********************************************
+ok: [192.168.10.42] => {
+    "msg": [
+        "Docker version : 29.6.1",
+        "UFW status     : active",
+        "fail2ban       : running",
+        "SSH config     : valid",
+        "Collector      : executable at /usr/local/bin/collect_logs.sh",
+        "authorized_keys: present at /root/.ssh/authorized_keys",
+        "Host is ready — cloning repo and deploying"
+    ]
+}
+
+TASK [Clone the project repository] ********************************************
+changed: [192.168.10.42]
+
+TASK [Set execute permission on CronScript.sh] *********************************
+changed: [192.168.10.42]
+
+TASK [Write cron entry for log collection] *************************************
+changed: [192.168.10.42]
+
+TASK [Rename .env.example to .env for docker compose] **************************
+changed: [192.168.10.42]
+
+TASK [Build and start Docker containers] ***************************************
+changed: [192.168.10.42]
+
+TASK [Confirm containers are running] ******************************************
+ok: [192.168.10.42]
+
+TASK [Print deployment summary] ************************************************
+ok: [192.168.10.42] => {
+    "msg": [
+        "Repo cloned to : /home/labadmin/Ethical-Hacking-Mod",
+        "CronScript     : executable",
+        "Cron entry     : planted",
+        "Containers     : running",
+        "Site available : https://192.168.10.42"
+    ]
+}
+
+PLAY RECAP *********************************************************************
+192.168.10.42              : ok=54   changed=10   unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+

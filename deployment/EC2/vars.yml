@@ -1,0 +1,51 @@
+# =============================================================================
+# vars.yml
+# Change these values before running the playbook.
+# =============================================================================
+
+# ── admin account ─────────────────────────────────────────────────────────────
+admin_user: labadmin                          # non-root account created on the host
+admin_ssh_public_key: "ssh-ed25519 AAAA..."  # paste your public key here
+
+# ── EC2 access user ───────────────────────────────────────────────────────────
+# The default user the PEM key is tied to on the EC2 instance.
+# Ubuntu EC2 instances use 'ubuntu', Amazon Linux uses 'ec2-user'.
+# This user is kept in AllowUsers so the PEM key still works after hardening.
+ec2_user: test-vuln
+
+# ── repo ──────────────────────────────────────────────────────────────────────
+repo_url: https://github.com/kalios5/Ethical-Hacking-Mod.git
+
+# ── application secrets ───────────────────────────────────────────────────────
+# .env.example in the repo is renamed to .env during setup
+# edit .env.example in the repo before deploying if values need changing
+
+# ── docker ────────────────────────────────────────────────────────────────────
+# version is resolved inline using ansible_facts in setup.yml
+# pinned to 29.6.1 — the CopyEscape vulnerable version
+
+# ── container ─────────────────────────────────────────────────────────────────
+container_name: app                           # must match docker-compose container_name
+
+# ── collector script ──────────────────────────────────────────────────────────
+collector_script_src: "../../Scripts/DockerEscapeScripts/HostScripts/CronScript.sh"
+collector_script_dest: "/usr/local/bin/collect_logs.sh"
+collector_log: "/var/log/collector.log"
+collector_log_dir: "/var/platform/logs"
+
+# ── fail2ban ──────────────────────────────────────────────────────────────────
+fail2ban_maxretry: 3
+fail2ban_findtime: 600
+fail2ban_bantime: 3600
+
+# ── ssh ───────────────────────────────────────────────────────────────────────
+ssh_max_auth_tries: 4
+ssh_max_sessions: 2
+ssh_client_alive_interval: 300
+ssh_client_alive_count_max: 2
+ssh_log_level: VERBOSE
+ssh_banner_text: "Authorised access only. All activity is monitored and logged."
+
+# ── sudo ──────────────────────────────────────────────────────────────────────
+sudo_timestamp_timeout: 5
+sudo_passwd_tries: 3

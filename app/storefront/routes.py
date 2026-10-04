@@ -13,7 +13,6 @@ from app.storefront import bp
 ALLOWED_TAGS = ["div", "span", "p", "form", "input", "button", "strong", "em", "br"]
 ALLOWED_ATTRS = {"input": ["type", "placeholder"], "*": ["class"]}
 
-
 @bp.route("/")
 def index():
     query = request.args.get("q", "").strip()

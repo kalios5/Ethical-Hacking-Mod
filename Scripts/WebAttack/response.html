@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Your account | Petal & Stem</title>
+    <title>Error 400 | Petal & Stem</title>
     <link rel="stylesheet" href="/static/site.css">
     
 </head>
@@ -12,45 +12,17 @@
     <a class="brand" href="/">Petal & Stem</a>
     <nav>
         <a href="/">Shop</a>
-        <a href="/cart">Cart</a><a class="account-link" href="/auth/account"><img class="avatar" src="/auth/avatar/../../app/templates/storefront/cart.html" alt="">test</a><a href="/auth/logout">Log out</a>
+        <a href="/auth/login">Log in</a><a class="button small" href="/auth/register">Create account</a>
     </nav>
 </header>
 <main class="page">
-    <div class="notices"><div class="notice success">Account updated.</div></div>
+    <div class="notices"><div class="notice notice">Please sign in to continue.</div></div>
     
     <section class="form-page">
-        <p class="eyebrow">Account settings</p>
-        <h1>test</h1>
-        <form class="form-card" method="post" enctype="multipart/form-data"><input type="hidden" name="csrf_token" value="IjY2ZTNiNjU5M2E0NGI5MWIwYTBlNWRkODE3ODU0YWE1MGM0NzhiNGMi.aroZbw.SLTDVoNNt_WMcq2uXqLEKN4cMXk">
-            <div class="avatar-row">
-                <img class="avatar large" src="/auth/avatar/../../app/templates/storefront/cart.html" alt="Your profile picture">
-                <label>Profile picture <span class="muted">(JPG, PNG or WEBP, max 2 MB)</span>
-                    <input type="file" name="avatar" accept="image/png,image/jpeg,image/webp">
-                </label>
-            </div>
-            <label>Email
-                <input type="email" name="email" value="test@test.test" required>
-            </label>
-            <label>New password <span class="muted">(leave blank to keep current)</span>
-                <input type="password" name="password" minlength="8">
-            </label>
-            <button class="button" type="submit">Save changes</button>
-        </form>
-
-        
-        <form class="form-card" method="post" action="/auth/account/avatar/remove">
-            <input type="hidden" name="csrf_token" value="IjY2ZTNiNjU5M2E0NGI5MWIwYTBlNWRkODE3ODU0YWE1MGM0NzhiNGMi.aroZbw.SLTDVoNNt_WMcq2uXqLEKN4cMXk">
-            <button class="button secondary" type="submit">Remove profile picture</button>
-        </form>
-        
-
-        <div class="form-card">
-            <h2>Two-factor authentication</h2>
-            
-                <p class="muted">Status: <strong>Not enabled</strong>. Add a second layer of protection with an authenticator app.</p>
-                <a class="button" href="/auth/2fa/setup">Set up 2FA</a>
-            
-        </div>
+        <p class="eyebrow">Error 400</p>
+        <h1>Bad Request</h1>
+        <p>The CSRF token is missing.</p>
+        <a class="button" href="/">Back to the shop</a>
     </section>
 
 </main>
