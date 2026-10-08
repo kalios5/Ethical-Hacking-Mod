@@ -5,13 +5,13 @@
 
 # ── admin account ─────────────────────────────────────────────────────────────
 admin_user: labadmin                          # non-root account created on the host
-admin_ssh_public_key: "ssh-ed25519 AAAA..."  # paste your public key here
+admin_ssh_public_key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDAZjNM5CMuPZ8gTzzVLXoaWN+4043MPWoxwFBjxFYb6ZE48llm4mxiu0BoVdVguUrfMzEQ3296Sr3NJ+ShH/eOwJFZmwVS9p1ryOVJgNu/8fXipxQL8857Q1OIWFxFndrtzvKPk6MCrVKnGDl0N7Q9PzV0jvdj3zmKSDAhI3C8MNLmvYG8j//FUnrnq4fepnxZnk8uK0YvSuRbxsxartwT7uu3xrdxVHvNXiGwdaSUChZKi2eE/53dQwxYevnbcl7JCxGMw3u187tzIRlUWkzV8+yRrlzKFS08WpDYcYpYRWJTwYPH/mne7rwsjFHbX6O6C9tMMoSbWdzGM+i6js6j"  # paste your public key here
 
 # ── EC2 access user ───────────────────────────────────────────────────────────
 # The default user the PEM key is tied to on the EC2 instance.
 # Ubuntu EC2 instances use 'ubuntu', Amazon Linux uses 'ec2-user'.
 # This user is kept in AllowUsers so the PEM key still works after hardening.
-ec2_user: test-vuln
+ec2_user: student11 #test-vuln
 
 # ── repo ──────────────────────────────────────────────────────────────────────
 repo_url: https://github.com/kalios5/Ethical-Hacking-Mod.git
